@@ -91,25 +91,27 @@ fun RequestForm() {
 fun RequestHeader(modifier: Modifier) {
     Text(
         text = buildAnnotatedString {
-            append("Solicitud ")
+            append("Solicitud de")
             withStyle(style = SpanStyle(color = Color.Black)) {
-                append("de\n") // Aquí agregas el salto de línea
+                append("Acceso\n") // Aquí agregas el salto de línea
             }
-            append("Acceso a la Información")
+            append("a la Información")
         },
+        color = Color.Black,
         textAlign = TextAlign.Center,
         fontSize = 20.sp,
         fontWeight = FontWeight.Bold,
         modifier = modifier
-            .padding(top = 24.dp, bottom = 20.dp)
+            .padding(top = 24.dp, bottom = 15.dp)
     )
 
     Text(
         text = "Incidente N°1999",
+        color = Color.Black,
         fontSize = 17.sp,
         fontWeight = FontWeight.Bold,
         modifier = Modifier
-            .padding(bottom = 20.dp)
+            .padding(bottom = 15.dp)
     )
 }
 
@@ -123,13 +125,14 @@ fun TextFieldRequest(label: String, value: String, onValueChange: (String) -> Un
                 text = label,
                 fontWeight = FontWeight.ExtraBold,
                 modifier = Modifier.padding(start = 4.dp),
-                fontSize = 14.sp,
+                fontSize = 13.sp,
                 color = Color(0xFF848688)
             )
         },
         modifier = Modifier
             .padding(bottom = 13.dp)
-            .width(310.dp),
+            .width(290.dp)
+            .height(50.dp),
         colors = TextFieldDefaults.colors(
             focusedContainerColor = Color.White,
             unfocusedContainerColor = Color.White,

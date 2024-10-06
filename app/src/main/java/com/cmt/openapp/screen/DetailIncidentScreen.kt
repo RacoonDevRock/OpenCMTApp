@@ -110,6 +110,7 @@ fun RequestedBox(navigate: () -> Unit) {
                     }
                     append("del incidente, debe solicitarlo.")
                 },
+                color = Color.Black,
                 textAlign = TextAlign.Center,
                 fontSize = 14.sp,
                 fontWeight = FontWeight.Bold,
@@ -129,7 +130,7 @@ fun IncidentDetails(
     sector: String,
     interventionType: String,
     interventionResult: String,
-    observations: String
+    observations: String,
 ) {
     MySection("Tipo de Incidente")
     MySectionData(incidentType)
@@ -153,19 +154,20 @@ fun IncidentDetails(
 @Composable
 fun IncidentHeader(incidentNumber: String, date: String) {
     Row(
-        Modifier
-            .fillMaxWidth()
+        Modifier.fillMaxWidth()
     ) {
         Text(
             text = "Incidente N° $incidentNumber",
             fontWeight = FontWeight.Bold,
-            fontSize = 14.sp
+            fontSize = 14.sp,
+            color = Color.Black
         )
         Spacer(modifier = Modifier.weight(1f))
         Text(
             text = date,
             fontWeight = FontWeight.Bold,
-            fontSize = 14.sp
+            fontSize = 14.sp,
+            color = Color.Black
         )
     }
 }
@@ -177,6 +179,7 @@ fun MySectionData(text: String) {
         fontSize = 13.sp,
         fontWeight = FontWeight.Bold,
         textAlign = TextAlign.Justify,
+        color = Color.Black,
         modifier = Modifier.fillMaxWidth()
     )
 }
@@ -185,7 +188,7 @@ fun MySectionData(text: String) {
 fun MySection(text: String) {
     Text(
         text = text,
-        color = Color(0xFF848688),
+        color = MaterialTheme.colorScheme.tertiary,
         fontSize = 11.sp,
         fontWeight = FontWeight.Bold,
         modifier = Modifier.fillMaxWidth()

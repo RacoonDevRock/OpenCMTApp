@@ -135,13 +135,15 @@ fun IncidentBox(navigate: () -> Unit) {
                 Text(
                     text = "Incidente N° 1999",
                     fontWeight = FontWeight.Bold,
-                    fontSize = 15.sp
+                    fontSize = 15.sp,
+                    color = Color.Black,
                 )
                 Spacer(modifier = Modifier.weight(1f))
                 Text(
                     text = "03/08/2024 10:29",
                     fontWeight = FontWeight.Bold,
-                    fontSize = 15.sp
+                    fontSize = 15.sp,
+                    color = Color.Black,
                 )
             }
             Spacer(modifier = Modifier.weight(1f))
@@ -149,6 +151,7 @@ fun IncidentBox(navigate: () -> Unit) {
                 text = "Consumo de licor en la vía pública",
                 fontWeight = FontWeight.Bold,
                 fontSize = 15.sp,
+                color = Color.Black,
                 modifier = Modifier
                     .fillMaxWidth()
             )
@@ -188,7 +191,8 @@ fun ExpandableBox(
                 text = "Filtros",
                 fontSize = 18.sp,
                 fontWeight = FontWeight.Bold,
-                modifier = Modifier.padding(bottom = 20.dp)
+                modifier = Modifier.padding(bottom = 20.dp),
+                color = Color.Black,
             )
             FilterSection()
         }
@@ -261,7 +265,7 @@ fun MyTextField(
                 text = placeholder,
                 fontWeight = FontWeight.ExtraBold,
                 modifier = Modifier.padding(start = 8.dp),
-                color = MaterialTheme.colorScheme.onSurface
+                color = Color.Black,
             )
         },
         readOnly = true,

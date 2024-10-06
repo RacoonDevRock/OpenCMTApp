@@ -15,6 +15,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.SpanStyle
@@ -74,11 +75,12 @@ fun InfoSection(modifier: Modifier, navigate: () -> Unit) {
             Text(
                 text = buildAnnotatedString {
                     append("Conoce sobre los ")
-                    withStyle(style = SpanStyle(color = MaterialTheme.colorScheme.onBackground)) {
+                    withStyle(style = SpanStyle(color = Color.Black)) {
                         append("incidentes\n")
                     }
                     append("y solicita informes detallados")
                 },
+                color = Color.Black,
                 textAlign = TextAlign.Center,
                 fontWeight = FontWeight.Bold,
                 fontSize = 18.sp
@@ -98,8 +100,8 @@ fun MyButtonNavigate(navigate: () -> Unit, textButton: String, myIconButton: Ima
         colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.tertiary)
     ) {
         Row() {
-            Text(text = textButton, fontSize = 21.sp)
-            Icon(myIconButton, contentDescription = "navigate")
+            Text(text = textButton, fontSize = 21.sp, color = Color.White)
+            Icon(myIconButton, contentDescription = "navigate", tint = Color.White)
         }
     }
 }
