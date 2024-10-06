@@ -62,6 +62,7 @@ dependencies {
 
     // library material icon extended
     implementation(libs.androidx.compose.material)
+    implementation(libs.androidx.navigation.compose)
 
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
