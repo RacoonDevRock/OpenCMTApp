@@ -62,7 +62,7 @@ fun DetailIncidentScreen(modifier: Modifier, navigationController: NavHostContro
                 Column(
                     Modifier
                         .fillMaxSize()
-                        .padding(14.dp)
+                        .padding(horizontal = 16.dp, vertical = 14.dp)
                 ) {
                     IncidentHeader("1999", "03/08/2024 10:29")
                     Spacer(modifier = Modifier.height(10.dp))
@@ -176,8 +176,8 @@ fun IncidentHeader(incidentNumber: String, date: String) {
 fun MySectionData(text: String) {
     Text(
         text = text,
-        fontSize = 13.sp,
-        fontWeight = FontWeight.Bold,
+        fontSize = 14.sp,
+        fontWeight = FontWeight.ExtraBold,
         textAlign = TextAlign.Justify,
         color = Color.Black,
         modifier = Modifier.fillMaxWidth()
@@ -189,7 +189,7 @@ fun MySection(text: String) {
     Text(
         text = text,
         color = MaterialTheme.colorScheme.tertiary,
-        fontSize = 11.sp,
+        fontSize = 12.sp,
         fontWeight = FontWeight.Bold,
         modifier = Modifier.fillMaxWidth()
     )

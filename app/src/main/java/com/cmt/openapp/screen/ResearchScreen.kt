@@ -3,9 +3,6 @@ package com.cmt.openapp.screen
 import android.app.DatePickerDialog
 import android.content.Context
 import android.widget.DatePicker
-import androidx.compose.animation.core.animateDpAsState
-import androidx.compose.animation.core.animateFloatAsState
-import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -19,14 +16,11 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
@@ -36,32 +30,18 @@ import com.cmt.openapp.model.SearchViewModel
 import java.util.*
 
 //@Preview(showSystemUi = true)
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun ResearchScreen(modifier: Modifier, viewModel: SearchViewModel = SearchViewModel(), navigationController: NavHostController) {
-    var isExpanded by remember { mutableStateOf(false) }
+fun ResearchScreen(
+    modifier: Modifier,
+    viewModel: SearchViewModel = SearchViewModel(),
+    navigationController: NavHostController,
+) {
+    var isBottomSheetVisible by remember { mutableStateOf(false) }
 
-    val maxHeight = 500.dp // Altura máxima
-    val minHeight = 100.dp // Altura mínima
-
-    // Animación de la altura del Box
-    val animatedBoxHeight by animateDpAsState(
-        targetValue = if (isExpanded) maxHeight else minHeight,
-        animationSpec = tween(durationMillis = 800)
-    )
-
-    // Animación para rotar el ícono
-    val rotationAngle by animateFloatAsState(
-        targetValue = if (isExpanded) 180f else 0f,
-        animationSpec = tween(durationMillis = 800)
-    )
-
-    Box(
-        modifier = modifier
-            .fillMaxSize()
-            .background(MaterialTheme.colorScheme.background)
-    ) {
+    Box(modifier = modifier.fillMaxSize()) {
         Column(
-            modifier = Modifier.fillMaxWidth()
+            modifier = Modifier.fillMaxSize()
         ) {
             HeaderSection()
 
@@ -73,20 +53,115 @@ fun ResearchScreen(modifier: Modifier, viewModel: SearchViewModel = SearchViewMo
                     .weight(1f), horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 items(1) {
-                    IncidentBox {
-                         navigationController.navigate(Routes.DetailIncidentScreen.route)
-                    }
+                    IncidentBox({
+                        navigationController.navigate(Routes.DetailIncidentScreen.route)
+                    }, "1999", "03/08/2020", "Consumo de licor en la vía pública")
                 }
             }
 
-//            Spacer(modifier = Modifier.height(70.dp))
+            Spacer(modifier = Modifier.height(75.dp))
         }
 
-        // Box anclado al fondo, que se expande/contrae con click
-        ExpandableBox(isExpanded, animatedBoxHeight, rotationAngle, Modifier.align(Alignment.BottomCenter)) {
-            isExpanded = !isExpanded
+        if (isBottomSheetVisible) {
+            ModalBottomSheet(
+                onDismissRequest = {
+                    isBottomSheetVisible = false
+                },
+                modifier = Modifier
+                    .fillMaxWidth(),
+                containerColor = MaterialTheme.colorScheme.primaryContainer,
+                contentColor = Color.Black
+            ) {
+                BottomSheetContent(viewModel)
+            }
+        }
+
+        Button(
+            onClick = {
+                isBottomSheetVisible = true
+            },
+            modifier = Modifier
+                .align(Alignment.BottomCenter)
+                .padding(16.dp),
+            colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.tertiary)
+        ) {
+            Row(horizontalArrangement = Arrangement.SpaceBetween) {
+                Text(
+                    text = "Mostrar Filtros",
+                    fontSize = 21.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = Color.White
+                )
+                Icon(Icons.Default.Search, contentDescription = "navigate", tint = Color.White)
+            }
         }
     }
+}
+
+@Composable
+fun BottomSheetContent(viewModel: SearchViewModel = SearchViewModel()) {
+    val context = LocalContext.current
+    val calendar = Calendar.getInstance()
+    val datePickerDialog = rememberDatePicker(context, calendar, viewModel)
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(16.dp)
+    ) {
+        Text(
+            text = "Filtros",
+            fontWeight = FontWeight.ExtraBold,
+            modifier = Modifier.align(Alignment.CenterHorizontally)
+        )
+        Spacer(modifier = Modifier.height(10.dp))
+
+        MyTextField(viewModel.date, { viewModel.date = it }, "Fecha", {
+            Icon(
+                imageVector = Icons.Default.CalendarMonth,
+                contentDescription = "Abrir selector de fecha",
+                Modifier.clickable { datePickerDialog.show() }
+            )
+        }, Modifier.align(Alignment.CenterHorizontally))
+
+        MyTextField(viewModel.zone, { viewModel.zone = it }, "Zona", {
+            Icon(
+                imageVector = Icons.Default.KeyboardArrowDown,
+                contentDescription = "Seleccionar zona"
+            )
+        }, Modifier.align(Alignment.CenterHorizontally))
+
+        MyTextField(viewModel.sector, { viewModel.sector = it }, "Sector", {
+            Icon(
+                imageVector = Icons.Default.KeyboardArrowDown,
+                contentDescription = "Seleccionar sector"
+            )
+        }, Modifier.align(Alignment.CenterHorizontally))
+
+        MyTextField(
+            viewModel.accidentType,
+            { viewModel.accidentType = it },
+            "Tipo de Incidente",
+            {
+                Icon(
+                    imageVector = Icons.Default.KeyboardArrowDown,
+                    contentDescription = "Seleccionar tipo de incidente"
+                )
+            },
+            Modifier.align(Alignment.CenterHorizontally)
+        )
+
+        Button(
+            onClick = {},
+            colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.tertiary),
+            modifier = Modifier.align(Alignment.CenterHorizontally)
+        ) {
+            Row() {
+                Text(text = "Buscar", fontSize = 21.sp, color = Color.White)
+                Icon(Icons.Default.Search, contentDescription = "navigate", tint = Color.White)
+            }
+        }
+    }
+    Spacer(modifier = Modifier.width(56.dp))
 }
 
 @Composable
@@ -96,11 +171,7 @@ fun HeaderSection() {
             .fillMaxWidth()
             .height(140.dp)
     ) {
-        Icon(
-            imageVector = Icons.Default.Info,
-            contentDescription = "Información sobre incidentes",
-            Modifier.padding(18.dp), tint = Color(0xFF848688)
-        )
+        IconInfo()
         Image(
             painter = painterResource(id = R.drawable.open_logo_small),
             contentDescription = "Logo CMT",
@@ -113,11 +184,28 @@ fun HeaderSection() {
 }
 
 @Composable
-fun IncidentBox(navigate: () -> Unit) {
+fun IconInfo() {
+    Icon(
+        imageVector = Icons.Default.Info,
+        contentDescription = "Información sobre incidentes",
+        modifier = Modifier
+            .padding(18.dp)
+            .clickable { },
+        tint = MaterialTheme.colorScheme.tertiary
+    )
+}
+
+@Composable
+fun IncidentBox(
+    navigate: () -> Unit,
+    numberIncident: String,
+    dateIncident: String,
+    motiveIncident: String,
+) {
     Box(
         modifier = Modifier
             .fillMaxWidth()
-            .height(90.dp)
+            .height(80.dp)
             .padding(start = 26.dp, end = 26.dp, bottom = 16.dp)
             .clip(RoundedCornerShape(16.dp))
             .background(MaterialTheme.colorScheme.secondaryContainer)
@@ -126,31 +214,30 @@ fun IncidentBox(navigate: () -> Unit) {
         Column(
             Modifier
                 .fillMaxSize()
-                .padding(14.dp)
+                .padding(12.dp)
         ) {
             Row(
                 Modifier
                     .fillMaxWidth()
             ) {
                 Text(
-                    text = "Incidente N° 1999",
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 15.sp,
+                    text = "Incidente N° $numberIncident",
+                    fontWeight = FontWeight.ExtraBold,
+                    fontSize = 14.sp,
                     color = Color.Black,
                 )
                 Spacer(modifier = Modifier.weight(1f))
                 Text(
-                    text = "03/08/2024 10:29",
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 15.sp,
+                    text = dateIncident,
+                    fontWeight = FontWeight.ExtraBold,
+                    fontSize = 14.sp,
                     color = Color.Black,
                 )
             }
-            Spacer(modifier = Modifier.weight(1f))
             Text(
-                text = "Consumo de licor en la vía pública",
-                fontWeight = FontWeight.Bold,
-                fontSize = 15.sp,
+                text = motiveIncident,
+                fontWeight = FontWeight.ExtraBold,
+                fontSize = 14.sp,
                 color = Color.Black,
                 modifier = Modifier
                     .fillMaxWidth()
@@ -160,84 +247,10 @@ fun IncidentBox(navigate: () -> Unit) {
 }
 
 @Composable
-fun ExpandableBox(
-    isExpanded: Boolean,
-    animatedBoxHeight: Dp,
-    rotationAngle: Float,
-    modifier: Modifier,
-    onClick: () -> Unit
-) {
-    Box(
-        modifier = modifier
-            .fillMaxWidth()
-            .height(animatedBoxHeight)
-            .clip(RoundedCornerShape(topStart = 130.dp, topEnd = 130.dp))
-            .background(MaterialTheme.colorScheme.primaryContainer)
-            .clickable { onClick() }
-    ) {
-        Column(
-            Modifier.fillMaxWidth(),
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            Icon(
-                imageVector = Icons.Filled.KeyboardArrowUp,
-                contentDescription = "Expandir filtros",
-                modifier = Modifier
-                    .padding(20.dp)
-                    .rotate(rotationAngle),
-                tint = Color(0XFF848688)
-            )
-            Text(
-                text = "Filtros",
-                fontSize = 18.sp,
-                fontWeight = FontWeight.Bold,
-                modifier = Modifier.padding(bottom = 20.dp),
-                color = Color.Black,
-            )
-            FilterSection()
-        }
-    }
-}
-
-@Composable
-fun FilterSection(viewModel: SearchViewModel = SearchViewModel()) {
-    val context = LocalContext.current
-    val calendar = Calendar.getInstance()
-    val datePickerDialog = rememberDatePicker(context, calendar, viewModel)
-
-    MyTextField(viewModel.date, { viewModel.date = it }, "Fecha") {
-        Icon(
-            imageVector = Icons.Default.CalendarMonth,
-            contentDescription = "Abrir selector de fecha",
-            Modifier.clickable { datePickerDialog.show() }
-        )
-    }
-    MyTextField(viewModel.zone, { viewModel.zone = it }, "Zona") {
-        Icon(
-            imageVector = Icons.Default.KeyboardArrowDown,
-            contentDescription = "Seleccionar zona"
-        )
-    }
-    MyTextField(viewModel.sector, { viewModel.sector = it }, "Sector") {
-        Icon(
-            imageVector = Icons.Default.KeyboardArrowDown,
-            contentDescription = "Seleccionar sector"
-        )
-    }
-    MyTextField(viewModel.accidentType, { viewModel.accidentType = it }, "Tipo de Incidente") {
-        Icon(
-            imageVector = Icons.Default.KeyboardArrowDown,
-            contentDescription = "Seleccionar tipo de incidente"
-        )
-    }
-    MyButtonNavigate({  }, "Buscar", Icons.Default.Search)
-}
-
-@Composable
 fun rememberDatePicker(
     context: Context,
     calendar: Calendar,
-    viewModel: SearchViewModel
+    viewModel: SearchViewModel,
 ): DatePickerDialog {
     return DatePickerDialog(
         context,
@@ -255,7 +268,8 @@ fun MyTextField(
     value: String,
     onValueChange: (String) -> Unit,
     placeholder: String,
-    trailingIcon: @Composable () -> Unit
+    trailingIcon: @Composable () -> Unit,
+    modifier: Modifier,
 ) {
     TextField(
         value = value,
@@ -265,17 +279,22 @@ fun MyTextField(
                 text = placeholder,
                 fontWeight = FontWeight.ExtraBold,
                 modifier = Modifier.padding(start = 8.dp),
-                color = Color.Black,
+                fontSize = 13.sp,
+                color = MaterialTheme.colorScheme.tertiary
             )
         },
         readOnly = true,
-        modifier = Modifier
-            .padding(bottom = 25.dp)
-            .width(310.dp),
+        modifier = modifier
+            .padding(bottom = 20.dp)
+            .width(290.dp)
+            .height(50.dp),
         trailingIcon = trailingIcon,
         colors = TextFieldDefaults.colors(
-            focusedContainerColor = MaterialTheme.colorScheme.secondaryContainer,
-            unfocusedContainerColor = MaterialTheme.colorScheme.secondaryContainer,
+            focusedContainerColor = Color.White,
+            unfocusedContainerColor = Color.White,
+            unfocusedTextColor = MaterialTheme.colorScheme.tertiary,
+            unfocusedTrailingIconColor = MaterialTheme.colorScheme.tertiary,
+            focusedTrailingIconColor = MaterialTheme.colorScheme.tertiary,
             focusedIndicatorColor = Color.Transparent,
             unfocusedIndicatorColor = Color.Transparent
         ),

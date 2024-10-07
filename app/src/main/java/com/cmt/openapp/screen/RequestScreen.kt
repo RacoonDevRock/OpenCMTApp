@@ -136,9 +136,9 @@ fun TextFieldRequest(label: String, value: String, onValueChange: (String) -> Un
         colors = TextFieldDefaults.colors(
             focusedContainerColor = Color.White,
             unfocusedContainerColor = Color.White,
-            unfocusedTextColor = Color(0XFF848688),
-            unfocusedTrailingIconColor = Color(0XFF848688),
-            focusedTrailingIconColor = Color(0XFF848688),
+            unfocusedTextColor = MaterialTheme.colorScheme.tertiary,
+            unfocusedTrailingIconColor = MaterialTheme.colorScheme.tertiary,
+            focusedTrailingIconColor = MaterialTheme.colorScheme.tertiary,
             focusedIndicatorColor = Color.Transparent,
             unfocusedIndicatorColor = Color.Transparent
         ),

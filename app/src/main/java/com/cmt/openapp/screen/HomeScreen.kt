@@ -97,7 +97,7 @@ fun MyButtonNavigate(navigate: () -> Unit, textButton: String, myIconButton: Ima
         onClick = {
             navigate()
         },
-        colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.tertiary)
+        colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.tertiary),
     ) {
         Row() {
             Text(text = textButton, fontSize = 21.sp, color = Color.White)
