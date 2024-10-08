@@ -18,7 +18,7 @@ import com.cmt.openapp.model.Routes
 import com.cmt.openapp.model.SearchViewModel
 import com.cmt.openapp.screen.DetailIncidentScreen
 import com.cmt.openapp.screen.HomeScreen
-import com.cmt.openapp.screen.RequestScreen
+import com.cmt.openapp.screen.ReportScreen
 import com.cmt.openapp.screen.ResearchScreen
 import com.cmt.openapp.ui.theme.OpenAppTheme
 
@@ -35,7 +35,7 @@ class MainActivity : ComponentActivity() {
                     val navigationController = rememberNavController()
                     NavHost(
                         navController = navigationController,
-                        startDestination = Routes.ResearchScreen.route
+                        startDestination = Routes.HomeScreen.route
                     ) {
                         composable(Routes.HomeScreen.route) {
                             HomeScreen(
@@ -61,8 +61,8 @@ class MainActivity : ComponentActivity() {
                                 navigationController
                             )
                         }
-                        composable(Routes.RequestScreen.route) {
-                            RequestScreen(
+                        composable(Routes.ReportScreen.route) {
+                            ReportScreen(
                                 Modifier.padding(
                                     innerPadding
                                 ),

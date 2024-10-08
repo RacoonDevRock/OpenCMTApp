@@ -1,6 +1,5 @@
 package com.cmt.openapp.screen
 
-import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -11,35 +10,40 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.FilePresent
-import androidx.compose.material.icons.filled.PlayArrow
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.withStyle
-import androidx.compose.ui.tooling.preview.Devices
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
+import com.cmt.openapp.R
 import com.cmt.openapp.model.Routes
 
 //@Preview(showSystemUi = true, device = "spec:width=412dp,height=915dp,dpi=420")
 @Composable
 fun DetailIncidentScreen(modifier: Modifier, navigationController: NavHostController) {
+    var isTopDialogVisible by rememberSaveable { mutableStateOf(false) }
+
     Box(
         modifier = modifier
             .fillMaxSize()
@@ -48,41 +52,54 @@ fun DetailIncidentScreen(modifier: Modifier, navigationController: NavHostContro
         Column(
             modifier = Modifier.fillMaxWidth()
         ) {
-            HeaderSection()
+            HeaderSection { isTopDialogVisible = true }
 
             Spacer(modifier = Modifier.height(20.dp))
 
-            Box(
-                modifier = Modifier
-                    .weight(1f)
-                    .padding(horizontal = 25.dp)
-                    .clip(RoundedCornerShape(16.dp))
-                    .background(MaterialTheme.colorScheme.secondaryContainer)
-            ) {
-                Column(
-                    Modifier
-                        .fillMaxSize()
-                        .padding(horizontal = 16.dp, vertical = 14.dp)
-                ) {
-                    IncidentHeader("1999", "03/08/2024 10:29")
-                    Spacer(modifier = Modifier.height(10.dp))
-                    IncidentDetails(
-                        "Consumo de licor en la vía pública",
-                        "Alambre",
-                        "Cortijo",
-                        "Persuasiva",
-                        "Positivo",
-                        "Contribuyentes refieren que en el lugar se encuentran un grupo de 20 personas ingiriendo bebidas alcohólicas."
-                    )
-                }
-            }
+            IncidentDetailsContainer(Modifier.weight(1f))
 
             Spacer(modifier = Modifier.height(20.dp))
 
             RequestedBox {
-                navigationController.navigate(Routes.RequestScreen.route)
+                navigationController.navigate(Routes.ReportScreen.route)
             }
 
+        }
+
+        if (isTopDialogVisible) {
+            TopDialogSheet(onDismissRequest = { isTopDialogVisible = false }) {
+                InfoContent()
+            }
+        }
+    }
+}
+
+@Composable
+fun IncidentDetailsContainer(modifier: Modifier) {
+    Box(
+        modifier = modifier
+            .padding(horizontal = 25.dp)
+            .clip(RoundedCornerShape(16.dp))
+            .background(MaterialTheme.colorScheme.secondaryContainer)
+    ) {
+        val scrollState = rememberScrollState()
+
+        Column(
+            Modifier
+                .fillMaxSize()
+                .verticalScroll(scrollState)
+                .padding(horizontal = 16.dp, vertical = 14.dp)
+        ) {
+            IncidentHeader("1999", "03/08/2024 10:29")
+            Spacer(modifier = Modifier.height(10.dp))
+            IncidentDetails(
+                "Consumo de licor en la vía pública",
+                "Alambre",
+                "Cortijo",
+                "Persuasiva",
+                "Positivo",
+                "Contribuyentes refieren que en el lugar se encuentran un grupo de 20 personas ingiriendo bebidas alcohólicas."
+            )
         }
     }
 }
@@ -93,9 +110,8 @@ fun RequestedBox(navigate: () -> Unit) {
         modifier = Modifier
             .fillMaxWidth()
             .height(210.dp)
-            .clip(RoundedCornerShape(topStart = 130.dp, topEnd = 130.dp))
-            .background(MaterialTheme.colorScheme.primaryContainer)
-            .animateContentSize(),
+            .clip(RoundedCornerShape(topStart = 110.dp, topEnd = 110.dp))
+            .background(MaterialTheme.colorScheme.primaryContainer),
     ) {
         Column(
             Modifier.fillMaxSize(),
@@ -103,22 +119,22 @@ fun RequestedBox(navigate: () -> Unit) {
             verticalArrangement = Arrangement.Center
         ) {
             Text(
-                buildAnnotatedString {
-                    append("Si desea obtener un informe ")
-                    withStyle(style = SpanStyle(color = Color.Black)) {
-                        append("completo\n") // Aquí agregas el salto de línea
-                    }
-                    append("del incidente, debe solicitarlo.")
-                },
+                text = stringResource(id = R.string.previous_info_report),
                 color = Color.Black,
                 textAlign = TextAlign.Center,
                 fontSize = 14.sp,
+                lineHeight = 15.sp,
                 fontWeight = FontWeight.Bold,
                 modifier = Modifier
-                    .padding(bottom = 24.dp)
+                    .padding(horizontal = 50.dp)
                     .align(Alignment.CenterHorizontally)
             )
-            MyButtonNavigate(navigate, "Solicitar", Icons.Default.FilePresent)
+            Spacer(modifier = Modifier.height(25.dp))
+            MyButtonNavigate(
+                navigate,
+                stringResource(id = R.string.previous_button_report),
+                Icons.Default.FilePresent
+            )
         }
     }
 }
@@ -132,22 +148,22 @@ fun IncidentDetails(
     interventionResult: String,
     observations: String,
 ) {
-    MySection("Tipo de Incidente")
+    MySection(stringResource(id = R.string.filter_button))
     MySectionData(incidentType)
     Spacer(modifier = Modifier.height(3.dp))
-    MySection("Zona")
+    MySection(stringResource(id = R.string.zone_field_filter))
     MySectionData(zone)
     Spacer(modifier = Modifier.height(3.dp))
-    MySection("Sector")
+    MySection(stringResource(id = R.string.sector_field_filter))
     MySectionData(sector)
     Spacer(modifier = Modifier.height(3.dp))
-    MySection("Tipo de Intervención")
+    MySection(stringResource(id = R.string.subtitle_intervention_type_report))
     MySectionData(interventionType)
     Spacer(modifier = Modifier.height(3.dp))
-    MySection("Resultado de la Intervencion")
+    MySection(stringResource(id = R.string.subtitle_intervention_result_report))
     MySectionData(interventionResult)
     Spacer(modifier = Modifier.height(3.dp))
-    MySection("Observaciones")
+    MySection(stringResource(id = R.string.subtitle_observers_button))
     MySectionData(observations)
 }
 
@@ -180,7 +196,10 @@ fun MySectionData(text: String) {
         fontWeight = FontWeight.ExtraBold,
         textAlign = TextAlign.Justify,
         color = Color.Black,
-        modifier = Modifier.fillMaxWidth()
+        lineHeight = 16.sp,
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(bottom = 5.dp)
     )
 }
 
@@ -191,6 +210,7 @@ fun MySection(text: String) {
         color = MaterialTheme.colorScheme.tertiary,
         fontSize = 12.sp,
         fontWeight = FontWeight.Bold,
+        lineHeight = 12.sp,
         modifier = Modifier.fillMaxWidth()
     )
 }

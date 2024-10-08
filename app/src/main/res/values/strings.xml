@@ -1,3 +1,35 @@
 <resources>
+    <!-- Name App -->
     <string name="app_name">OpenApp</string>
+
+    <!-- Home String -->
+    <string name="home_description">Conoce sobre los incidentes y solicita informes detallados</string>
+    <string name="home_button">Comenzar</string>
+
+    <!-- Filter String -->
+    <string name="message_filter">Mostrar Filtros</string>
+    <string name="title_filter">Filtros</string>
+    <string name="date_field_filter">Fecha</string>
+    <string name="zone_field_filter">Zona</string>
+    <string name="sector_field_filter">Sector</string>
+    <string name="incident_type_field_filter">Tipo de Incidente</string>
+    <string name="filter_button">Buscar</string>
+
+    <!-- Detail String -->
+    <string name="previous_info_report">Si desea obtener un informe completo del incidente, debe solicitarlo</string>
+    <string name="previous_button_report">Solicitar</string>
+    <string name="subtitle_intervention_type_report">Tipo de Intervención</string>
+    <string name="subtitle_intervention_result_report">Resultado de la Intervención</string>
+    <string name="subtitle_observers_button">Observaciones</string>
+
+    <!-- Report String -->
+    <string name="title_report">Solicitud de Acceso a la Información</string>
+    <string name="name_field_report">Nombre Completo/Razón Social</string>
+    <string name="id_field_report">DNI/CE/RUC/Otros</string>
+    <string name="address_field_report">Domicilio</string>
+    <string name="city_field_report">Distrito</string>
+    <string name="email_field_report">Correo Electrónico</string>
+    <string name="phone_field_report">Teléfono/Celular</string>
+    <string name="motive_field_report">Motivo</string>
+    <string name="report_button">Enviar</string>
 </resources>

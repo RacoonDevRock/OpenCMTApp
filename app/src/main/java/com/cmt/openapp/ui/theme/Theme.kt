@@ -12,6 +12,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 
+val colorTextTitle = Color(0xFF000000)
 val backgroundWhite = Color(0xFFFFFFFF)
 val backgroundCMT = Color(0xFFE5E5E5)
 val containerData = Color(0xFFD9D9D9)
@@ -21,14 +22,16 @@ private val DarkColorScheme = darkColorScheme(
     background = backgroundCMT,
     primaryContainer = containerData,
     tertiary = ButtonColor,
-    secondaryContainer = backgroundWhite
+    secondaryContainer = backgroundWhite,
+    primary = colorTextTitle
 )
 
 private val LightColorScheme = lightColorScheme(
     background = backgroundCMT,
     primaryContainer = containerData,
     tertiary = ButtonColor,
-    secondaryContainer = backgroundWhite
+    secondaryContainer = backgroundWhite,
+    primary = colorTextTitle
 
     /* Other default colors to override
     background = Color(0xFFFFFBFE),
