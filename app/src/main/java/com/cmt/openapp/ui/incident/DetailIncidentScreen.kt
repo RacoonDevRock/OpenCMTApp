@@ -1,4 +1,4 @@
-package com.cmt.openapp.screen
+package com.cmt.openapp.ui.incident
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -20,7 +20,6 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -28,16 +27,17 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.SpanStyle
-import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
 import com.cmt.openapp.R
 import com.cmt.openapp.model.Routes
+import com.cmt.openapp.ui.home.MyButtonNavigate
+import com.cmt.openapp.ui.research.HeaderSection
+import com.cmt.openapp.ui.research.InfoContent
+import com.cmt.openapp.ui.research.TopDialogSheet
 
 //@Preview(showSystemUi = true, device = "spec:width=412dp,height=915dp,dpi=420")
 @Composable
@@ -91,7 +91,7 @@ fun IncidentDetailsContainer(modifier: Modifier) {
                 .padding(horizontal = 16.dp, vertical = 14.dp)
         ) {
             IncidentHeader("1999", "03/08/2024 10:29")
-            Spacer(modifier = Modifier.height(10.dp))
+            Spacer(modifier = Modifier.height(15.dp))
             IncidentDetails(
                 "Consumo de licor en la vía pública",
                 "Alambre",
@@ -148,7 +148,7 @@ fun IncidentDetails(
     interventionResult: String,
     observations: String,
 ) {
-    MySection(stringResource(id = R.string.filter_button))
+    MySection(stringResource(id = R.string.incident_type_field_filter))
     MySectionData(incidentType)
     Spacer(modifier = Modifier.height(3.dp))
     MySection(stringResource(id = R.string.zone_field_filter))
@@ -195,7 +195,7 @@ fun MySectionData(text: String) {
         fontSize = 14.sp,
         fontWeight = FontWeight.ExtraBold,
         textAlign = TextAlign.Justify,
-        color = Color.Black,
+        color = MaterialTheme.colorScheme.primary,
         lineHeight = 16.sp,
         modifier = Modifier
             .fillMaxWidth()

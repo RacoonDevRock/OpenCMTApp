@@ -1,4 +1,4 @@
-package com.cmt.openapp.screen
+package com.cmt.openapp.ui.research
 
 import android.app.DatePickerDialog
 import android.content.Context
@@ -31,6 +31,7 @@ import androidx.navigation.NavHostController
 import com.cmt.openapp.R
 import com.cmt.openapp.model.Routes
 import com.cmt.openapp.model.SearchViewModel
+import com.cmt.openapp.ui.home.MyButtonNavigate
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.util.*
@@ -314,7 +315,7 @@ fun IncidentBox(
     Box(
         modifier = Modifier
             .fillMaxWidth()
-            .height(80.dp)
+            .height(85.dp)
             .padding(start = 26.dp, end = 26.dp, bottom = 16.dp)
             .clip(RoundedCornerShape(16.dp))
             .background(MaterialTheme.colorScheme.secondaryContainer)

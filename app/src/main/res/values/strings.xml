@@ -32,4 +32,8 @@
     <string name="phone_field_report">Teléfono/Celular</string>
     <string name="motive_field_report">Motivo</string>
     <string name="report_button">Enviar</string>
+
+    <!-- No Internet -->
+    <string name="message_no_internet">No tienes conexión a Internet.</string>
+    <string name="button_no_internet">Reintentar</string>
 </resources>

@@ -1,4 +1,4 @@
-package com.cmt.openapp.screen
+package com.cmt.openapp.ui.report
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -33,6 +33,10 @@ import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
 import com.cmt.openapp.R
 import com.cmt.openapp.model.Routes
+import com.cmt.openapp.ui.research.HeaderSection
+import com.cmt.openapp.ui.research.InfoContent
+import com.cmt.openapp.ui.home.MyButtonNavigate
+import com.cmt.openapp.ui.research.TopDialogSheet
 
 //@Preview(showSystemUi = true)
 @Composable
