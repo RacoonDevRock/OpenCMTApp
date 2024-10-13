@@ -1,4 +1,4 @@
-package com.cmt.openapp.model
+package com.cmt.openapp.viewmodel
 
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf

@@ -15,7 +15,8 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.cmt.openapp.model.Routes
-import com.cmt.openapp.model.SearchViewModel
+import com.cmt.openapp.navigation.AppNavGraph
+import com.cmt.openapp.viewmodel.SearchViewModel
 import com.cmt.openapp.ui.incident.DetailIncidentScreen
 import com.cmt.openapp.ui.home.HomeScreen
 import com.cmt.openapp.ui.report.ReportScreen
@@ -36,43 +37,7 @@ class MainActivity : ComponentActivity() {
                 CheckInternetScreen {
                     Scaffold(Modifier.fillMaxSize()) { innerPadding ->
                         val navigationController = rememberNavController()
-                        NavHost(
-                            navController = navigationController,
-                            startDestination = Routes.HomeScreen.route
-                        ) {
-                            composable(Routes.HomeScreen.route) {
-                                HomeScreen(
-                                    Modifier.padding(
-                                        innerPadding
-                                    ), navigationController
-                                )
-                            }
-                            composable(Routes.ResearchScreen.route) {
-                                ResearchScreen(
-                                    Modifier.padding(
-                                        innerPadding
-                                    ),
-                                    searchViewModel,
-                                    navigationController
-                                )
-                            }
-                            composable(Routes.DetailIncidentScreen.route) {
-                                DetailIncidentScreen(
-                                    Modifier.padding(
-                                        innerPadding
-                                    ),
-                                    navigationController
-                                )
-                            }
-                            composable(Routes.ReportScreen.route) {
-                                ReportScreen(
-                                    Modifier.padding(
-                                        innerPadding
-                                    ),
-                                    navigationController
-                                )
-                            }
-                        }
+                        AppNavGraph(Modifier.padding(innerPadding), navigationController)
                     }
                 }
             }

@@ -30,10 +30,9 @@ import androidx.compose.ui.window.Dialog
 import androidx.navigation.NavHostController
 import com.cmt.openapp.R
 import com.cmt.openapp.model.Routes
-import com.cmt.openapp.model.SearchViewModel
+import com.cmt.openapp.viewmodel.SearchViewModel
 import com.cmt.openapp.ui.home.MyButtonNavigate
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
+import com.cmt.openapp.ui.loading.LoadingScreen
 import java.util.*
 
 //@Preview(showSystemUi = true)
@@ -46,11 +45,11 @@ fun ResearchScreen(
     var isBottomSheetVisible by rememberSaveable { mutableStateOf(false) }
     var isTopDialogVisible by rememberSaveable { mutableStateOf(false) }
 
-    LaunchedEffect(Unit) {
-        withContext(Dispatchers.IO) {
+//    LaunchedEffect(Unit) {
+//        withContext(Dispatchers.IO) {
 //            viewModel.loadIncidents()
-        }
-    }
+//        }
+//    }
 
     Box(modifier = modifier.fillMaxSize()) {
         Column(modifier = Modifier.fillMaxSize()) {
@@ -199,6 +198,11 @@ fun BottomSheetContent(viewModel: SearchViewModel = SearchViewModel()) {
     val context = LocalContext.current
     val calendar = Calendar.getInstance()
     val datePickerDialog = rememberDatePicker(context, calendar, viewModel)
+
+    val zoneOptions = listOf("Ayacucho", "El Alambre", "La Noria")
+    val sectorOptions = listOf("Sector A", "Sector B", "Sector C")
+    val accidentTypeOptions = listOf("Manu chipi", "Diego violado", "Flavio penetrado")
+
     Column(
         modifier = Modifier
             .fillMaxWidth()
@@ -226,52 +230,103 @@ fun BottomSheetContent(viewModel: SearchViewModel = SearchViewModel()) {
             Modifier.align(Alignment.CenterHorizontally)
         )
 
-        MyTextField(
-            viewModel.zone,
-            { viewModel.zone = it },
-            stringResource(id = R.string.zone_field_filter),
-            {
-                Icon(
-                    imageVector = Icons.Default.KeyboardArrowDown,
-                    contentDescription = "Seleccionar zona"
-                )
-            },
-            Modifier.align(Alignment.CenterHorizontally)
+        DropdownMenuField(
+            selectedOption = viewModel.zone,
+            onOptionSelected = { viewModel.zone = it },
+            label = stringResource(id = R.string.zone_field_filter),
+            options = zoneOptions
         )
 
-        MyTextField(
-            viewModel.sector,
-            { viewModel.sector = it },
-            stringResource(id = R.string.sector_field_filter),
-            {
-                Icon(
-                    imageVector = Icons.Default.KeyboardArrowDown,
-                    contentDescription = "Seleccionar sector"
-                )
-            },
-            Modifier.align(Alignment.CenterHorizontally)
+        DropdownMenuField(
+            selectedOption = viewModel.sector,
+            onOptionSelected = { viewModel.sector = it },
+            label = stringResource(id = R.string.sector_field_filter),
+            options = sectorOptions
         )
 
-        MyTextField(
-            viewModel.accidentType,
-            { viewModel.accidentType = it },
-            stringResource(id = R.string.incident_type_field_filter),
-            {
-                Icon(
-                    imageVector = Icons.Default.KeyboardArrowDown,
-                    contentDescription = "Seleccionar tipo de incidente"
-                )
-            },
-            Modifier.align(Alignment.CenterHorizontally)
+        DropdownMenuField(
+            selectedOption = viewModel.accidentType,
+            onOptionSelected = { viewModel.accidentType = it },
+            label = stringResource(id = R.string.incident_type_field_filter),
+            options = accidentTypeOptions
         )
 
         MyButtonNavigate(
-            { },
+            { /* Acciones cuando se filtra */ },
             stringResource(id = R.string.filter_button),
             Icons.Default.Search
         )
     }
     Spacer(modifier = Modifier.width(56.dp))
+}
+
+@Composable
+fun DropdownMenuField(
+    selectedOption: String,
+    onOptionSelected: (String) -> Unit,
+    label: String,
+    options: List<String>,
+    modifier: Modifier = Modifier,
+) {
+    var expanded by remember { mutableStateOf(false) } // Controla si el menú está desplegado
+
+    Box(modifier = modifier.fillMaxWidth()) {
+        // TextField personalizado
+        TextField(
+            value = selectedOption,
+            onValueChange = { /* No permitido ya que es solo seleccionable */ },
+            readOnly = true,
+            label = {
+                Text(
+                    text = label,
+                    fontWeight = FontWeight.ExtraBold,
+                    modifier = Modifier.padding(start = 8.dp),
+                    fontSize = 13.sp,
+                    color = MaterialTheme.colorScheme.tertiary
+                )
+            },
+            trailingIcon = {
+                Icon(
+                    imageVector = if (expanded) Icons.Filled.KeyboardArrowUp else Icons.Filled.KeyboardArrowDown,
+                    contentDescription = "arrow selected",
+                    tint = MaterialTheme.colorScheme.tertiary
+                )
+            },
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(start = 30.dp, end = 30.dp, bottom = 13.dp)
+                .clickable { expanded = !expanded }, // Abre o cierra el menú al hacer clic
+            colors = TextFieldDefaults.colors(
+                focusedContainerColor = Color.White,
+                unfocusedContainerColor = Color.White,
+                unfocusedTextColor = MaterialTheme.colorScheme.tertiary,
+                unfocusedTrailingIconColor = MaterialTheme.colorScheme.tertiary,
+                focusedTrailingIconColor = MaterialTheme.colorScheme.tertiary,
+                focusedIndicatorColor = Color.Transparent,
+                unfocusedIndicatorColor = Color.Transparent
+            ),
+            shape = RoundedCornerShape(25.dp)
+        )
+
+        // Menú desplegable personalizado
+        DropdownMenu(
+            expanded = expanded,
+            onDismissRequest = { expanded = false },
+            modifier = Modifier
+                .fillMaxWidth()
+//                .background(MaterialTheme.colorScheme.primaryContainer) // Color de fondo personalizado
+//                .clip(RoundedCornerShape(10.dp)) // Bordes redondeados
+        ) {
+            options.forEach { option ->
+                DropdownMenuItem(
+                    text = { Text(option, color = MaterialTheme.colorScheme.onPrimaryContainer) },
+                    onClick = {
+                        onOptionSelected(option)
+                        expanded = false // Cierra el menú al seleccionar una opción
+                    })
+            }
+        }
+    }
 }
 
 @Composable
@@ -362,6 +417,16 @@ fun rememberDatePicker(
     calendar: Calendar,
     viewModel: SearchViewModel,
 ): DatePickerDialog {
+    // fecha actual
+    val currentDate = Calendar.getInstance()
+
+    // fecha minima
+//    val minDate = Calendar.getInstance().apply {
+//        set(Calendar.YEAR, 2018)
+//        set(Calendar.MONTH, 0)
+//        set(Calendar.DAY_OF_MONTH, 1)
+//    }
+
     return DatePickerDialog(
         context,
         { _: DatePicker, year: Int, month: Int, dayOfMonth: Int ->
@@ -371,7 +436,10 @@ fun rememberDatePicker(
         calendar.get(Calendar.MONTH),
         calendar.get(Calendar.DAY_OF_MONTH)
     ).apply {
-        setOnDismissListener {  }
+//        setOnDismissListener {  }
+        // aplican y establecen fecha minimas y maxima
+//        datePicker.minDate = minDate.timeInMillis // metodos (datePicker.minDate)
+        datePicker.maxDate = currentDate.timeInMillis // metodos (datePicker.maxDate)
     }
 }
 
@@ -397,8 +465,8 @@ fun MyTextField(
         },
         readOnly = true,
         modifier = modifier
-            .padding(start = 30.dp, end = 30.dp, bottom = 13.dp)
-            .height(50.dp),
+            .fillMaxWidth()
+            .padding(start = 30.dp, end = 30.dp, bottom = 13.dp),
         trailingIcon = trailingIcon,
         colors = TextFieldDefaults.colors(
             focusedContainerColor = Color.White,
