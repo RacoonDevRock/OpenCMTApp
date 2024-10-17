@@ -1,6 +1,7 @@
 package com.cmt.openapp.ui.report
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.gestures.scrollable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -9,7 +10,10 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.FilePresent
 import androidx.compose.material3.MaterialTheme
@@ -27,18 +31,19 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.core.app.NotificationCompat.MessagingStyle.Message
 import androidx.navigation.NavHostController
 import com.cmt.openapp.R
 import com.cmt.openapp.model.Routes
+import com.cmt.openapp.ui.buttonNavigate.MyButton
+import com.cmt.openapp.ui.dialog.InfoContent
+import com.cmt.openapp.ui.dialog.TopDialogSheet
 import com.cmt.openapp.ui.research.HeaderSection
-import com.cmt.openapp.ui.research.InfoContent
-import com.cmt.openapp.ui.home.MyButtonNavigate
-import com.cmt.openapp.ui.research.TopDialogSheet
 
-//@Preview(showSystemUi = true)
 @Composable
 fun ReportScreen(modifier: Modifier, navigationController: NavHostController) {
     var isTopDialogVisible by rememberSaveable { mutableStateOf(false) }
@@ -81,8 +86,8 @@ fun BoxRequest(modifier: Modifier, navigate: () -> Unit) {
         ) {
             RequestHeader(Modifier.align(Alignment.CenterHorizontally))
             RequestForm()
-            MyButtonNavigate(
-                navigate,
+            MyButton(
+                { navigate() },
                 stringResource(id = R.string.report_button),
                 Icons.Default.FilePresent
             )
@@ -92,14 +97,25 @@ fun BoxRequest(modifier: Modifier, navigate: () -> Unit) {
 
 @Composable
 fun RequestForm() {
+    // Estados para cada campo de texto
+    var name by rememberSaveable { mutableStateOf("") }
+    var idt by rememberSaveable { mutableStateOf("") }
+    var address by rememberSaveable { mutableStateOf("") }
+    var city by rememberSaveable { mutableStateOf("") }
+    var email by rememberSaveable { mutableStateOf("") }
+    var phone by rememberSaveable { mutableStateOf("") }
+    var motive by rememberSaveable { mutableStateOf("") }
+
     Column(horizontalAlignment = Alignment.CenterHorizontally) {
-        TextFieldRequest(stringResource(id = R.string.name_field_report), "") {}
-        TextFieldRequest(stringResource(id = R.string.id_field_report), "") {}
-        TextFieldRequest(stringResource(id = R.string.address_field_report), "") {}
-        TextFieldRequest(stringResource(id = R.string.city_field_report), "") {}
-        TextFieldRequest(stringResource(id = R.string.email_field_report), "") {}
-        TextFieldRequest(stringResource(id = R.string.phone_field_report), "") {}
-        TextFieldRequest(stringResource(id = R.string.motive_field_report), "") {}
+        TextFieldRequest(stringResource(id = R.string.name_field_report), name, { name = it }, KeyboardType.Text)
+        TextFieldRequest(stringResource(id = R.string.id_field_report), idt, { idt = it }, KeyboardType.Number)
+        TextFieldRequest(stringResource(id = R.string.address_field_report), address, { address = it }, KeyboardType.Text)
+        TextFieldRequest(stringResource(id = R.string.city_field_report), city, { city = it }, KeyboardType.Text)
+        TextFieldRequest(stringResource(id = R.string.email_field_report), email, { email = it }, KeyboardType.Email)
+        TextFieldRequest(stringResource(id = R.string.phone_field_report), phone, {
+            if (it.length <= 9) phone = it // valir que cumple con phone.matches(Regex("^9\\d{8}$")) para habilitar el boton
+        }, KeyboardType.Number)
+        TextFieldRequest(stringResource(id = R.string.motive_field_report), motive, { motive = it }, KeyboardType.Text)
     }
 }
 
@@ -126,7 +142,7 @@ fun RequestHeader(modifier: Modifier) {
 }
 
 @Composable
-fun TextFieldRequest(label: String, value: String, onValueChange: (String) -> Unit) {
+fun TextFieldRequest(label: String, value: String, onValueChange: (String) -> Unit, keyboardType: KeyboardType) {
     TextField(
         value = value,
         onValueChange = onValueChange,
@@ -134,9 +150,8 @@ fun TextFieldRequest(label: String, value: String, onValueChange: (String) -> Un
             Text(
                 text = label,
                 fontWeight = FontWeight.ExtraBold,
-                modifier = Modifier.padding(start = 4.dp),
                 fontSize = 14.sp,
-                color = Color(0xFF848688)
+                color = MaterialTheme.colorScheme.tertiary
             )
         },
         modifier = Modifier
@@ -147,10 +162,14 @@ fun TextFieldRequest(label: String, value: String, onValueChange: (String) -> Un
             unfocusedContainerColor = Color.White,
             unfocusedTextColor = MaterialTheme.colorScheme.tertiary,
             unfocusedTrailingIconColor = MaterialTheme.colorScheme.tertiary,
-            focusedTrailingIconColor = MaterialTheme.colorScheme.tertiary,
+            focusedTextColor = MaterialTheme.colorScheme.primary,
+            focusedTrailingIconColor = MaterialTheme.colorScheme.primary,
             focusedIndicatorColor = Color.Transparent,
-            unfocusedIndicatorColor = Color.Transparent
+            unfocusedIndicatorColor = Color.Transparent,
         ),
-        shape = RoundedCornerShape(25.dp)
+        keyboardOptions = KeyboardOptions(keyboardType = keyboardType),
+        shape = RoundedCornerShape(25.dp),
+        maxLines = 1,
+        singleLine = true
     )
 }

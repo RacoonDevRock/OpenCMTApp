@@ -16,7 +16,7 @@ import com.cmt.openapp.ui.research.ResearchScreen
 fun AppNavGraph(
     modifier: Modifier,
     navController: NavHostController,
-    startDestination: String = Routes.ResearchScreen.route,
+    startDestination: String = Routes.ReportScreen.route,
 ) {
     NavHost(navController = navController, startDestination = startDestination) {
         addHomeRoute(modifier, navController)

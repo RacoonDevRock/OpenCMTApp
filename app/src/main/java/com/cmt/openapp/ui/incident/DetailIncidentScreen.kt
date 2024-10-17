@@ -34,12 +34,11 @@ import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
 import com.cmt.openapp.R
 import com.cmt.openapp.model.Routes
-import com.cmt.openapp.ui.home.MyButtonNavigate
+import com.cmt.openapp.ui.buttonNavigate.MyButton
+import com.cmt.openapp.ui.dialog.InfoContent
+import com.cmt.openapp.ui.dialog.TopDialogSheet
 import com.cmt.openapp.ui.research.HeaderSection
-import com.cmt.openapp.ui.research.InfoContent
-import com.cmt.openapp.ui.research.TopDialogSheet
 
-//@Preview(showSystemUi = true, device = "spec:width=412dp,height=915dp,dpi=420")
 @Composable
 fun DetailIncidentScreen(modifier: Modifier, navigationController: NavHostController) {
     var isTopDialogVisible by rememberSaveable { mutableStateOf(false) }
@@ -130,7 +129,7 @@ fun RequestedBox(navigate: () -> Unit) {
                     .align(Alignment.CenterHorizontally)
             )
             Spacer(modifier = Modifier.height(25.dp))
-            MyButtonNavigate(
+            MyButton(
                 navigate,
                 stringResource(id = R.string.previous_button_report),
                 Icons.Default.FilePresent

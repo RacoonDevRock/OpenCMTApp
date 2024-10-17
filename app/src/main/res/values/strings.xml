@@ -6,6 +6,12 @@
     <string name="home_description">Conoce sobre los incidentes y solicita informes detallados</string>
     <string name="home_button">Comenzar</string>
 
+    <!-- Info String -->
+    <string name="header_info_app">El presente aplicativo está sujeto de acuerdo a:</string>
+    <string name="n_law_info_app">Artículo 7 de la Ley N° 27806</string>
+    <string name="body_info_app">Toda persona tiene derecho a solicitar y recibir información de cualquier entidad de la Adminstración Pública. En ningún caso se exige expresión de causa para el ejercicio de este derecho.</string>
+    <string name="footer_info_app">Su uso aplica para consulta de incidentes y solicitudes de informes para entrega de copia certificada o simple.</string>
+
     <!-- Filter String -->
     <string name="message_filter">Mostrar Filtros</string>
     <string name="title_filter">Filtros</string>

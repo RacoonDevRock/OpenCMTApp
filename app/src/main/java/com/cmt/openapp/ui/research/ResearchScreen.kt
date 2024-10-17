@@ -23,22 +23,20 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.ui.window.Dialog
 import androidx.navigation.NavHostController
 import com.cmt.openapp.R
 import com.cmt.openapp.model.Routes
+import com.cmt.openapp.ui.buttonNavigate.MyButton
+import com.cmt.openapp.ui.dialog.InfoContent
+import com.cmt.openapp.ui.dialog.TopDialogSheet
 import com.cmt.openapp.viewmodel.SearchViewModel
-import com.cmt.openapp.ui.home.MyButtonNavigate
-import com.cmt.openapp.ui.loading.LoadingScreen
 import java.util.*
 
-//@Preview(showSystemUi = true)
 @Composable
 fun ResearchScreen(
-    modifier: Modifier,
+    modifier: Modifier = Modifier,
     viewModel: SearchViewModel = SearchViewModel(),
     navigationController: NavHostController,
 ) {
@@ -51,7 +49,9 @@ fun ResearchScreen(
 //        }
 //    }
 
-    Box(modifier = modifier.fillMaxSize()) {
+    Box(modifier = modifier
+        .fillMaxSize()
+        .padding(bottom = 16.dp)) {
         Column(modifier = Modifier.fillMaxSize()) {
             HeaderSection {
                 if (!isBottomSheetVisible) {
@@ -70,7 +70,7 @@ fun ResearchScreen(
                 items(1) {
                     IncidentBox({
                         navigationController.navigate(Routes.DetailIncidentScreen.route)
-                    }, "1999", "03/08/2020", "Consumo de licor en la vía pública")
+                    }, "1999", "03/08/2020", "10:29", "Consumo de licor en la vía pública")
                 }
             }
 
@@ -85,35 +85,17 @@ fun ResearchScreen(
             }
         }
 
-        BottomButton(
-            onClick = {
+        MyButton(
+            navigate = {
                 if (!isTopDialogVisible) {
                     isBottomSheetVisible = true
                 }
             },
-            Modifier.align(Alignment.BottomCenter)
+            textButton = "Mostrar Filtros",
+            myIconButton = Icons.Default.Search,
+            modifier = Modifier.align(Alignment.BottomCenter)
         )
 
-    }
-}
-
-@Composable
-fun BottomButton(onClick: () -> Unit, modifier: Modifier) {
-    Button(
-        onClick = { onClick() },
-        modifier = modifier
-            .padding(16.dp),
-        colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.tertiary)
-    ) {
-        Row(horizontalArrangement = Arrangement.SpaceBetween) {
-            Text(
-                text = stringResource(id = R.string.message_filter),
-                fontSize = 21.sp,
-                fontWeight = FontWeight.Bold,
-                color = Color.White
-            )
-            Icon(Icons.Default.Search, contentDescription = "navigate", tint = Color.White)
-        }
     }
 }
 
@@ -129,67 +111,6 @@ fun BottomSheetWithContent(viewModel: SearchViewModel, onDismiss: () -> Unit) {
         shape = RoundedCornerShape(topStart = 110.dp, topEnd = 110.dp)
     ) {
         BottomSheetContent(viewModel)
-    }
-}
-
-@Composable
-fun TopDialogSheet(onDismissRequest: () -> Unit, content: @Composable () -> Unit) {
-    Dialog(onDismissRequest = onDismissRequest) {
-        // Este Box asegura que el diálogo se muestre en la parte superior
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .clip(RoundedCornerShape(20.dp))
-                .background(MaterialTheme.colorScheme.secondaryContainer)
-                .padding(20.dp)
-        ) {
-            content()
-        }
-    }
-}
-
-@Composable
-fun InfoContent() {
-    Box(
-        Modifier
-            .fillMaxWidth()
-    ) {
-        Column(horizontalAlignment = Alignment.CenterHorizontally) {
-            Text(
-                text = "El presente aplicativo está sujeto de acuerdo a:",
-                color = MaterialTheme.colorScheme.primary,
-                fontWeight = FontWeight.Bold,
-                fontSize = 13.sp,
-                modifier = Modifier.align(Alignment.Start)
-            )
-            Text(
-                text = "Artículo 7 de la Ley N° 27806",
-                color = MaterialTheme.colorScheme.primary,
-                fontWeight = FontWeight.Bold,
-                fontSize = 13.sp
-            )
-
-            Text(
-                text = "Toda persona tiene derecho a solicitar y recibir información de cualquier entidad de la Adminstración Pública. En ningún caso se exige expresión de causa para el ejercicio de este derecho.",
-                color = MaterialTheme.colorScheme.primary,
-                fontWeight = FontWeight.Bold,
-                fontSize = 13.sp,
-                textAlign = TextAlign.Justify,
-                lineHeight = 12.sp
-            )
-
-            Spacer(modifier = Modifier.height(10.dp))
-
-            Text(
-                text = "Su uso aplica para consulta de incidentes y solicitudes de informes para entrega de copia certificada o simple.",
-                color = MaterialTheme.colorScheme.tertiary,
-                fontWeight = FontWeight.Bold,
-                fontSize = 13.sp,
-                textAlign = TextAlign.Justify,
-                lineHeight = 12.sp,
-                modifier = Modifier.padding(horizontal = 5.dp)
-            )
-        }
     }
 }
 
@@ -251,7 +172,7 @@ fun BottomSheetContent(viewModel: SearchViewModel = SearchViewModel()) {
             options = accidentTypeOptions
         )
 
-        MyButtonNavigate(
+        MyButton(
             { /* Acciones cuando se filtra */ },
             stringResource(id = R.string.filter_button),
             Icons.Default.Search
@@ -314,8 +235,6 @@ fun DropdownMenuField(
             onDismissRequest = { expanded = false },
             modifier = Modifier
                 .fillMaxWidth()
-//                .background(MaterialTheme.colorScheme.primaryContainer) // Color de fondo personalizado
-//                .clip(RoundedCornerShape(10.dp)) // Bordes redondeados
         ) {
             options.forEach { option ->
                 DropdownMenuItem(
@@ -365,6 +284,7 @@ fun IncidentBox(
     navigate: () -> Unit,
     numberIncident: String,
     dateIncident: String,
+    hourIncident: String,
     motiveIncident: String,
 ) {
     Box(
@@ -390,6 +310,7 @@ fun IncidentBox(
                     fontWeight = FontWeight.ExtraBold,
                     fontSize = 14.sp,
                     color = Color.Black,
+                    lineHeight = 20.sp
                 )
                 Spacer(modifier = Modifier.weight(1f))
                 Text(
@@ -397,13 +318,24 @@ fun IncidentBox(
                     fontWeight = FontWeight.ExtraBold,
                     fontSize = 14.sp,
                     color = Color.Black,
+                    lineHeight = 20.sp
+                )
+                Text(
+                    text = hourIncident,
+                    fontWeight = FontWeight.ExtraBold,
+                    fontSize = 14.sp,
+                    color = Color.Black,
+                    lineHeight = 20.sp,
+                    modifier = Modifier.padding(start = 3.dp)
                 )
             }
+            Spacer(modifier = Modifier.weight(1f))
             Text(
                 text = motiveIncident,
                 fontWeight = FontWeight.ExtraBold,
                 fontSize = 14.sp,
                 color = Color.Black,
+                lineHeight = 20.sp,
                 modifier = Modifier
                     .fillMaxWidth()
             )

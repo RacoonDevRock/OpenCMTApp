@@ -6,9 +6,6 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.PlayArrow
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -16,8 +13,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -27,8 +22,8 @@ import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
 import com.cmt.openapp.R
 import com.cmt.openapp.model.Routes
+import com.cmt.openapp.ui.buttonNavigate.MyButton
 
-//@Preview(showSystemUi = true)
 @Composable
 fun HomeScreen(modifier: Modifier, navigationController: NavHostController) {
     val navigateToResearch = remember { Routes.ResearchScreen.route }
@@ -83,26 +78,11 @@ fun InfoSection(modifier: Modifier, navigate: () -> Unit) {
                 modifier = Modifier.padding(horizontal = 50.dp)
             )
             Spacer(modifier = Modifier.height(40.dp))
-            MyButtonNavigate(
+            MyButton(
                 navigate,
                 stringResource(id = R.string.home_button),
                 Icons.Default.PlayArrow
             )
-        }
-    }
-}
-
-@Composable
-fun MyButtonNavigate(navigate: () -> Unit, textButton: String, myIconButton: ImageVector) {
-    Button(
-        onClick = {
-            navigate()
-        },
-        colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.tertiary),
-    ) {
-        Row() {
-            Text(text = textButton, fontSize = 21.sp, color = Color.White)
-            Icon(myIconButton, contentDescription = "navigate", tint = Color.White)
         }
     }
 }
