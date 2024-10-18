@@ -11,8 +11,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.navigation.compose.rememberNavController
-import com.cmt.openapp.navigation.AppNavGraph
-import com.cmt.openapp.network.CheckInternetScreen
+import com.cmt.openapp.core.navigation.AppNavGraph
+import com.cmt.openapp.core.network.CheckInternetScreen
 import com.cmt.openapp.ui.theme.OpenAppTheme
 
 class MainActivity : ComponentActivity() {

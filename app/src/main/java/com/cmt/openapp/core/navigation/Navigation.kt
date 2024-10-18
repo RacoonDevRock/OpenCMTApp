@@ -1,4 +1,4 @@
-package com.cmt.openapp.navigation
+package com.cmt.openapp.core.navigation
 
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
@@ -6,17 +6,16 @@ import androidx.navigation.NavGraphBuilder
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
-import com.cmt.openapp.model.Routes
-import com.cmt.openapp.ui.home.HomeScreen
-import com.cmt.openapp.ui.incident.DetailIncidentScreen
-import com.cmt.openapp.ui.report.ReportScreen
-import com.cmt.openapp.ui.research.ResearchScreen
+import com.cmt.openapp.core.ui.home.HomeScreen
+import com.cmt.openapp.detail.ui.DetailIncidentScreen
+import com.cmt.openapp.report.ui.ReportScreen
+import com.cmt.openapp.research.ui.ResearchScreen
 
 @Composable
 fun AppNavGraph(
     modifier: Modifier,
     navController: NavHostController,
-    startDestination: String = Routes.ReportScreen.route,
+    startDestination: String = Routes.HomeScreen.route,
 ) {
     NavHost(navController = navController, startDestination = startDestination) {
         addHomeRoute(modifier, navController)

@@ -1,4 +1,4 @@
-package com.cmt.openapp.ui.research
+package com.cmt.openapp.research.ui
 
 import android.app.DatePickerDialog
 import android.content.Context
@@ -27,11 +27,11 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
 import com.cmt.openapp.R
-import com.cmt.openapp.model.Routes
-import com.cmt.openapp.ui.buttonNavigate.MyButton
-import com.cmt.openapp.ui.dialog.InfoContent
-import com.cmt.openapp.ui.dialog.TopDialogSheet
-import com.cmt.openapp.viewmodel.SearchViewModel
+import com.cmt.openapp.core.navigation.Routes
+import com.cmt.openapp.research.ui.viewmodel.SearchViewModel
+import com.cmt.openapp.core.ui.shared.buttonNavigate.MyButton
+import com.cmt.openapp.core.ui.shared.dialog.InfoContent
+import com.cmt.openapp.core.ui.shared.dialog.TopDialogSheet
 import java.util.*
 
 @Composable
@@ -43,23 +43,17 @@ fun ResearchScreen(
     var isBottomSheetVisible by rememberSaveable { mutableStateOf(false) }
     var isTopDialogVisible by rememberSaveable { mutableStateOf(false) }
 
-//    LaunchedEffect(Unit) {
-//        withContext(Dispatchers.IO) {
-//            viewModel.loadIncidents()
-//        }
-//    }
-
-    Box(modifier = modifier
-        .fillMaxSize()
-        .padding(bottom = 16.dp)) {
+    Box(
+        modifier = modifier
+            .fillMaxSize()
+            .padding(bottom = 16.dp)
+    ) {
         Column(modifier = Modifier.fillMaxSize()) {
             HeaderSection {
                 if (!isBottomSheetVisible) {
                     isTopDialogVisible = true
                 }
             }
-
-            Spacer(modifier = Modifier.height(20.dp))
 
             LazyColumn(
                 Modifier
@@ -260,11 +254,14 @@ fun HeaderSection(onInfoClick: () -> Unit) {
             painter = painterResource(id = R.drawable.open_logo_small),
             contentDescription = "Logo CMT",
             Modifier
-                .padding(top = 30.dp)
+                .height(100.dp)
+                .padding(top = 10.dp)
                 .align(Alignment.Center),
             contentScale = ContentScale.Fit
         )
     }
+
+    Spacer(modifier = Modifier.height(15.dp))
 }
 
 @Composable
@@ -273,7 +270,7 @@ fun IconInfo(onClick: () -> Unit) {
         imageVector = Icons.Default.Info,
         contentDescription = "Información sobre incidentes",
         modifier = Modifier
-            .padding(18.dp)
+            .padding(22.dp)
             .clickable { onClick() },
         tint = MaterialTheme.colorScheme.tertiary
     )
@@ -397,8 +394,8 @@ fun MyTextField(
         },
         readOnly = true,
         modifier = modifier
-            .fillMaxWidth()
-            .padding(start = 30.dp, end = 30.dp, bottom = 13.dp),
+            .padding(bottom = 13.dp)
+            .width(300.dp),
         trailingIcon = trailingIcon,
         colors = TextFieldDefaults.colors(
             focusedContainerColor = Color.White,

@@ -26,7 +26,6 @@
     <string name="previous_button_report">Solicitar</string>
     <string name="subtitle_intervention_type_report">Tipo de Intervención</string>
     <string name="subtitle_intervention_result_report">Resultado de la Intervención</string>
-    <string name="subtitle_observers_button">Observaciones</string>
 
     <!-- Report String -->
     <string name="title_report">Solicitud de Acceso a la Información</string>

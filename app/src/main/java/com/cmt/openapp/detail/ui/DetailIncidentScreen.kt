@@ -1,4 +1,4 @@
-package com.cmt.openapp.ui.incident
+package com.cmt.openapp.detail.ui
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -10,9 +10,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.FilePresent
 import androidx.compose.material3.MaterialTheme
@@ -33,14 +31,17 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
 import com.cmt.openapp.R
-import com.cmt.openapp.model.Routes
-import com.cmt.openapp.ui.buttonNavigate.MyButton
-import com.cmt.openapp.ui.dialog.InfoContent
-import com.cmt.openapp.ui.dialog.TopDialogSheet
-import com.cmt.openapp.ui.research.HeaderSection
+import com.cmt.openapp.core.navigation.Routes
+import com.cmt.openapp.core.ui.shared.buttonNavigate.MyButton
+import com.cmt.openapp.core.ui.shared.dialog.InfoContent
+import com.cmt.openapp.core.ui.shared.dialog.TopDialogSheet
+import com.cmt.openapp.research.ui.HeaderSection
 
 @Composable
-fun DetailIncidentScreen(modifier: Modifier, navigationController: NavHostController) {
+fun DetailIncidentScreen(
+    modifier: Modifier,
+    navigationController: NavHostController,
+) {
     var isTopDialogVisible by rememberSaveable { mutableStateOf(false) }
 
     Box(
@@ -55,7 +56,10 @@ fun DetailIncidentScreen(modifier: Modifier, navigationController: NavHostContro
 
             Spacer(modifier = Modifier.height(20.dp))
 
-            IncidentDetailsContainer(Modifier.weight(1f))
+            Box(modifier = Modifier.weight(1f), contentAlignment = Alignment.Center) {
+                IncidentDetailsContainer()
+
+            }
 
             Spacer(modifier = Modifier.height(20.dp))
 
@@ -74,30 +78,27 @@ fun DetailIncidentScreen(modifier: Modifier, navigationController: NavHostContro
 }
 
 @Composable
-fun IncidentDetailsContainer(modifier: Modifier) {
+fun IncidentDetailsContainer() {
     Box(
-        modifier = modifier
+        modifier = Modifier
+            .fillMaxWidth()
             .padding(horizontal = 25.dp)
             .clip(RoundedCornerShape(16.dp))
             .background(MaterialTheme.colorScheme.secondaryContainer)
     ) {
-        val scrollState = rememberScrollState()
-
         Column(
             Modifier
-                .fillMaxSize()
-                .verticalScroll(scrollState)
-                .padding(horizontal = 16.dp, vertical = 14.dp)
+                .fillMaxWidth()
+                .padding(horizontal = 20.dp, vertical = 20.dp)
         ) {
-            IncidentHeader("1999", "03/08/2024 10:29")
+            IncidentHeader("1999", "03/08/2024", "10:29")
             Spacer(modifier = Modifier.height(15.dp))
             IncidentDetails(
                 "Consumo de licor en la vía pública",
                 "Alambre",
                 "Cortijo",
                 "Persuasiva",
-                "Positivo",
-                "Contribuyentes refieren que en el lugar se encuentran un grupo de 20 personas ingiriendo bebidas alcohólicas."
+                "Positivo"
             )
         }
     }
@@ -145,7 +146,6 @@ fun IncidentDetails(
     sector: String,
     interventionType: String,
     interventionResult: String,
-    observations: String,
 ) {
     MySection(stringResource(id = R.string.incident_type_field_filter))
     MySectionData(incidentType)
@@ -161,13 +161,10 @@ fun IncidentDetails(
     Spacer(modifier = Modifier.height(3.dp))
     MySection(stringResource(id = R.string.subtitle_intervention_result_report))
     MySectionData(interventionResult)
-    Spacer(modifier = Modifier.height(3.dp))
-    MySection(stringResource(id = R.string.subtitle_observers_button))
-    MySectionData(observations)
 }
 
 @Composable
-fun IncidentHeader(incidentNumber: String, date: String) {
+fun IncidentHeader(incidentNumber: String, fecha: String, hora: String) {
     Row(
         Modifier.fillMaxWidth()
     ) {
@@ -179,7 +176,7 @@ fun IncidentHeader(incidentNumber: String, date: String) {
         )
         Spacer(modifier = Modifier.weight(1f))
         Text(
-            text = date,
+            text = "$fecha $hora",
             fontWeight = FontWeight.Bold,
             fontSize = 14.sp,
             color = Color.Black
@@ -195,7 +192,7 @@ fun MySectionData(text: String) {
         fontWeight = FontWeight.ExtraBold,
         textAlign = TextAlign.Justify,
         color = MaterialTheme.colorScheme.primary,
-        lineHeight = 16.sp,
+        lineHeight = 18.sp,
         modifier = Modifier
             .fillMaxWidth()
             .padding(bottom = 5.dp)

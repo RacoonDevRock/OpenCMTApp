@@ -1,4 +1,4 @@
-package com.cmt.openapp.ui.dialog
+package com.cmt.openapp.core.ui.shared.dialog
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box

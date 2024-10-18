@@ -1,4 +1,4 @@
-package com.cmt.openapp.ui.buttonNavigate
+package com.cmt.openapp.core.ui.shared.buttonNavigate
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row

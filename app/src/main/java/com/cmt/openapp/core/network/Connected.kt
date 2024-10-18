@@ -1,4 +1,4 @@
-package com.cmt.openapp.network
+package com.cmt.openapp.core.network
 
 import android.content.Context
 import android.net.ConnectivityManager
@@ -26,7 +26,8 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.cmt.openapp.R
-import com.cmt.openapp.ui.loading.LoadingScreen
+import com.cmt.openapp.core.ui.shared.loading.LoadingScreen
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
@@ -55,7 +56,7 @@ fun CheckInternetScreen(content: @Composable () -> Unit) {
         } else {
             NoInternetConnectionScreen(onRetry = {
                 isLoading = true
-                coroutineScope.launch {
+                coroutineScope.launch(Dispatchers.IO) {  // Cambia Dispatchers.Main a Dispatchers.IO
                     delay(500)
                     isConnected = isInternetAvailable(context)
                     isLoading = false

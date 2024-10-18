@@ -1,4 +1,4 @@
-package com.cmt.openapp.model
+package com.cmt.openapp.core.navigation
 
 sealed class Routes(val route: String) {
     object HomeScreen : Routes("homeScreen")

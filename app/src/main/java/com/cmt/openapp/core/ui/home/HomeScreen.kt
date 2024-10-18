@@ -1,4 +1,4 @@
-package com.cmt.openapp.ui.home
+package com.cmt.openapp.core.ui.home
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -13,6 +13,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -21,8 +22,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
 import com.cmt.openapp.R
-import com.cmt.openapp.model.Routes
-import com.cmt.openapp.ui.buttonNavigate.MyButton
+import com.cmt.openapp.core.navigation.Routes
+import com.cmt.openapp.core.ui.shared.buttonNavigate.MyButton
 
 @Composable
 fun HomeScreen(modifier: Modifier, navigationController: NavHostController) {
@@ -50,7 +51,8 @@ fun LogoSection(modifier: Modifier) {
             Modifier
                 .size(300.dp)
                 .aspectRatio(1f)
-                .align(Alignment.BottomCenter)
+                .align(Alignment.BottomCenter),
+            contentScale = ContentScale.Crop
         )
     }
 }

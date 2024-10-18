@@ -1,4 +1,4 @@
-package com.cmt.openapp.ui.loading
+package com.cmt.openapp.core.ui.shared.loading
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
