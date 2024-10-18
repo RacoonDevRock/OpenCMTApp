@@ -58,7 +58,6 @@ fun DetailIncidentScreen(
 
             Box(modifier = Modifier.weight(1f), contentAlignment = Alignment.Center) {
                 IncidentDetailsContainer()
-
             }
 
             Spacer(modifier = Modifier.height(20.dp))
