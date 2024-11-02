@@ -52,7 +52,7 @@ fun DetailIncidentScreen(
         Column(
             modifier = Modifier.fillMaxWidth()
         ) {
-            HeaderSection { isTopDialogVisible = true }
+            HeaderSection(navigationController) { isTopDialogVisible = true }
 
             Spacer(modifier = Modifier.height(20.dp))
 

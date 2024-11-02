@@ -68,6 +68,7 @@ dependencies {
 
     // livedata
     implementation(libs.androidx.runtime.livedata)
+    implementation(libs.androidx.navigation.compose)
 
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)

@@ -22,9 +22,11 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.navigation.NavController
 import androidx.navigation.NavHostController
 import com.cmt.openapp.R
 import com.cmt.openapp.core.navigation.Routes
@@ -49,7 +51,7 @@ fun ResearchScreen(
             .padding(bottom = 16.dp)
     ) {
         Column(modifier = Modifier.fillMaxSize()) {
-            HeaderSection {
+            HeaderSection(navigationController) {
                 if (!isBottomSheetVisible) {
                     isTopDialogVisible = true
                 }
@@ -129,7 +131,7 @@ fun BottomSheetContent(viewModel: SearchViewModel = SearchViewModel()) {
             fontWeight = FontWeight.ExtraBold,
             modifier = Modifier.align(Alignment.CenterHorizontally)
         )
-        Spacer(modifier = Modifier.height(10.dp))
+        Spacer(modifier = Modifier.height(16.dp))
 
         MyTextField(
             viewModel.date,
@@ -185,7 +187,7 @@ fun DropdownMenuField(
 ) {
     var expanded by remember { mutableStateOf(false) } // Controla si el menú está desplegado
 
-    Box(modifier = modifier.fillMaxWidth()) {
+    Box(modifier = modifier.width(300.dp)) {
         // TextField personalizado
         TextField(
             value = selectedOption,
@@ -195,11 +197,16 @@ fun DropdownMenuField(
                 Text(
                     text = label,
                     fontWeight = FontWeight.ExtraBold,
-                    modifier = Modifier.padding(start = 8.dp),
-                    fontSize = 13.sp,
+                    fontSize = 14.sp,
+                    lineHeight = 15.sp,
                     color = MaterialTheme.colorScheme.tertiary
                 )
             },
+            textStyle = TextStyle(
+                fontSize = 14.sp,
+                lineHeight = 15.sp,
+                color = Color.Black
+            ),
             trailingIcon = {
                 Icon(
                     imageVector = if (expanded) Icons.Filled.KeyboardArrowUp else Icons.Filled.KeyboardArrowDown,
@@ -207,9 +214,10 @@ fun DropdownMenuField(
                     tint = MaterialTheme.colorScheme.tertiary
                 )
             },
-            modifier = Modifier
+            modifier = modifier
                 .fillMaxWidth()
-                .padding(start = 30.dp, end = 30.dp, bottom = 13.dp)
+                .padding(bottom = 10.dp)
+                .fillMaxWidth()
                 .clickable { expanded = !expanded }, // Abre o cierra el menú al hacer clic
             colors = TextFieldDefaults.colors(
                 focusedContainerColor = Color.White,
@@ -220,7 +228,7 @@ fun DropdownMenuField(
                 focusedIndicatorColor = Color.Transparent,
                 unfocusedIndicatorColor = Color.Transparent
             ),
-            shape = RoundedCornerShape(25.dp)
+            shape = RoundedCornerShape(24.dp)
         )
 
         // Menú desplegable personalizado
@@ -243,13 +251,13 @@ fun DropdownMenuField(
 }
 
 @Composable
-fun HeaderSection(onInfoClick: () -> Unit) {
+fun HeaderSection(navController: NavController, onInfoClick: () -> Unit) {
     Box(
         modifier = Modifier
             .fillMaxWidth()
             .height(140.dp)
     ) {
-        IconInfo(onInfoClick)
+        IconBack(navController, Modifier.align(Alignment.TopStart))
         Image(
             painter = painterResource(id = R.drawable.open_logo_small),
             contentDescription = "Logo CMT",
@@ -259,18 +267,31 @@ fun HeaderSection(onInfoClick: () -> Unit) {
                 .align(Alignment.Center),
             contentScale = ContentScale.Fit
         )
+        IconInfo(onInfoClick, Modifier.align(Alignment.TopEnd))
     }
 
     Spacer(modifier = Modifier.height(15.dp))
 }
 
 @Composable
-fun IconInfo(onClick: () -> Unit) {
+fun IconBack(navController: NavController, modifier: Modifier) {
+    Icon(
+        imageVector = Icons.Default.ArrowBackIosNew,
+        contentDescription = "Retroceso",
+        modifier = modifier
+            .padding(24.dp)
+            .clickable { navController.popBackStack() },
+        tint = MaterialTheme.colorScheme.tertiary
+    )
+}
+
+@Composable
+fun IconInfo(onClick: () -> Unit, modifier: Modifier) {
     Icon(
         imageVector = Icons.Default.Info,
         contentDescription = "Información sobre incidentes",
-        modifier = Modifier
-            .padding(22.dp)
+        modifier = modifier
+            .padding(24.dp)
             .clickable { onClick() },
         tint = MaterialTheme.colorScheme.tertiary
     )
@@ -387,14 +408,19 @@ fun MyTextField(
             Text(
                 text = placeholder,
                 fontWeight = FontWeight.ExtraBold,
-                modifier = Modifier.padding(start = 8.dp),
-                fontSize = 13.sp,
+                fontSize = 14.sp,
+                lineHeight = 15.sp,
                 color = MaterialTheme.colorScheme.tertiary
             )
         },
+        textStyle = TextStyle(
+            fontSize = 14.sp,
+            lineHeight = 15.sp,
+            color = Color.Black
+        ),
         readOnly = true,
         modifier = modifier
-            .padding(bottom = 13.dp)
+            .padding(bottom = 10.dp)
             .width(300.dp),
         trailingIcon = trailingIcon,
         colors = TextFieldDefaults.colors(
@@ -406,6 +432,6 @@ fun MyTextField(
             focusedIndicatorColor = Color.Transparent,
             unfocusedIndicatorColor = Color.Transparent
         ),
-        shape = RoundedCornerShape(25.dp)
+        shape = RoundedCornerShape(24.dp)
     )
 }

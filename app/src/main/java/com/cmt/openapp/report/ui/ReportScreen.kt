@@ -30,6 +30,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.KeyboardType
@@ -59,9 +60,9 @@ fun ReportScreen(
         Column(
             modifier = Modifier.fillMaxWidth()
         ) {
-            HeaderSection { isTopDialogVisible = true }
+            HeaderSection(navigationController) { isTopDialogVisible = true }
 
-            BoxRequest(Modifier.weight(1f)) { navigationController.navigate(Routes.HomeScreen.route) }
+            BoxRequest(Modifier.fillMaxSize()) { navigationController.navigate(Routes.HomeScreen.route) }
         }
 
         if (isTopDialogVisible) {
@@ -191,14 +192,20 @@ fun TextFieldRequest(
             Text(
                 text = label,
                 fontWeight = FontWeight.ExtraBold,
-                fontSize = 12.sp,
+                fontSize = 14.sp,
+                lineHeight = 15.sp,
                 color = MaterialTheme.colorScheme.tertiary
             )
         },
+        textStyle = TextStyle(
+            fontSize = 14.sp,
+            lineHeight = 15.sp,
+            color = Color.Black
+        ),
         modifier = Modifier
-            .padding(bottom = 13.dp)
+            .padding(bottom = 10.dp)
             .width(300.dp)
-            .height(55.dp),
+            .height(50.dp),
         colors = TextFieldDefaults.colors(
             focusedContainerColor = Color.White,
             unfocusedContainerColor = Color.White,
@@ -214,7 +221,7 @@ fun TextFieldRequest(
             autoCorrectEnabled = true,
             keyboardType = keyboardType
         ),
-        shape = RoundedCornerShape(25.dp),
+        shape = RoundedCornerShape(24.dp),
         maxLines = 1,
         singleLine = true
     )
