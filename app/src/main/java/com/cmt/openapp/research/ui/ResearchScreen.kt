@@ -128,7 +128,7 @@ fun ResearchScreen(
                         items(uiState.incidents) { incident ->
                             IncidentBox(
                                 {
-                                    navigationController.navigate(Routes.DetailIncidentScreen.route)
+                                    navigationController.navigate(Routes.DetailIncidentScreen.createRoute(incident.nroIncidente))
                                 },
                                 incident.nroIncidente,
                                 incident.fecha,

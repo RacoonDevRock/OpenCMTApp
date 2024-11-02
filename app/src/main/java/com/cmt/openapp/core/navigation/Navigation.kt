@@ -4,8 +4,10 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.NavHostController
+import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
+import androidx.navigation.navArgument
 import com.cmt.openapp.core.ui.home.HomeScreen
 import com.cmt.openapp.detail.ui.DetailIncidentScreen
 import com.cmt.openapp.report.ui.ReportScreen
@@ -38,8 +40,12 @@ fun NavGraphBuilder.addResearchRoute(modifier: Modifier, navController: NavHostC
 }
 
 fun NavGraphBuilder.addDetailIncidentRoute(modifier: Modifier, navController: NavHostController) {
-    composable(Routes.DetailIncidentScreen.route) {
-        DetailIncidentScreen(modifier = modifier, navigationController = navController)
+    composable(
+        route = "${Routes.DetailIncidentScreen.route}/{incidentId}",
+        arguments = listOf(navArgument("incidentId") { type = NavType.StringType })
+    ) { backStackEntry ->
+        val incidentId = backStackEntry.arguments?.getString("incidentId") ?: ""
+        DetailIncidentScreen(modifier = modifier, navigationController = navController, incidentId = incidentId)
     }
 }
 

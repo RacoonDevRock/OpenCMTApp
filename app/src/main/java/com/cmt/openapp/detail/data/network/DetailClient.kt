@@ -1,14 +1,11 @@
 package com.cmt.openapp.detail.data.network
 
-import com.cmt.openapp.detail.data.network.response.IncidentDTO
-import retrofit2.Response
+import com.cmt.openapp.detail.data.network.response.IncidentDTODetail
 import retrofit2.http.GET
 import retrofit2.http.Path
 
 interface DetailClient {
 
     @GET("api/incidente/{id}")
-    suspend fun getIncidentById(
-        @Path("id") id: Long
-    ): Response<IncidentDTO>
+    suspend fun getIncidentDetail(@Path("id") id: Long): IncidentDTODetail
 }

@@ -13,9 +13,12 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.FilePresent
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -29,20 +32,31 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavHostController
 import com.cmt.openapp.R
 import com.cmt.openapp.core.navigation.Routes
 import com.cmt.openapp.core.ui.shared.buttonNavigate.MyButton
 import com.cmt.openapp.core.ui.shared.dialog.InfoContent
 import com.cmt.openapp.core.ui.shared.dialog.TopDialogSheet
+import com.cmt.openapp.detail.data.network.response.IncidentDTODetail
+import com.cmt.openapp.detail.ui.viewmodel.DetailViewModel
 import com.cmt.openapp.research.ui.HeaderSection
 
 @Composable
 fun DetailIncidentScreen(
     modifier: Modifier,
     navigationController: NavHostController,
+    incidentId: String,
+    viewModel: DetailViewModel = hiltViewModel(),
 ) {
     var isTopDialogVisible by rememberSaveable { mutableStateOf(false) }
+
+    LaunchedEffect(Unit) {
+        viewModel.loadIncidentDetail(incidentId.toLong())
+    }
+
+    val incidentDetail by viewModel.incidentDetail.collectAsState()
 
     Box(
         modifier = modifier
@@ -57,7 +71,9 @@ fun DetailIncidentScreen(
             Spacer(modifier = Modifier.height(20.dp))
 
             Box(modifier = Modifier.weight(1f), contentAlignment = Alignment.Center) {
-                IncidentDetailsContainer()
+                incidentDetail?.let {
+                    IncidentDetailsContainer(it)
+                } ?: CircularProgressIndicator()
             }
 
             Spacer(modifier = Modifier.height(20.dp))
@@ -77,7 +93,7 @@ fun DetailIncidentScreen(
 }
 
 @Composable
-fun IncidentDetailsContainer() {
+fun IncidentDetailsContainer(incidentDetail: IncidentDTODetail) {
     Box(
         modifier = Modifier
             .fillMaxWidth()
@@ -90,14 +106,14 @@ fun IncidentDetailsContainer() {
                 .fillMaxWidth()
                 .padding(horizontal = 20.dp, vertical = 20.dp)
         ) {
-            IncidentHeader("1999", "03/08/2024", "10:29")
+            IncidentHeader(incidentDetail.nroIncidente, incidentDetail.fecha, incidentDetail.horallamada)
             Spacer(modifier = Modifier.height(15.dp))
             IncidentDetails(
-                "Consumo de licor en la vía pública",
-                "Alambre",
-                "Cortijo",
-                "Persuasiva",
-                "Positivo"
+                incidentDetail.tipoIncidente,
+                incidentDetail.zona,
+                incidentDetail.sector,
+                incidentDetail.tipoIntervencion,
+                incidentDetail.resultado
             )
         }
     }
