@@ -57,7 +57,7 @@ fun CheckInternetScreen(content: @Composable () -> Unit) {
             NoInternetConnectionScreen(onRetry = {
                 isLoading = true
                 coroutineScope.launch(Dispatchers.IO) {  // Cambia Dispatchers.Main a Dispatchers.IO
-                    delay(500)
+                    delay(300)
                     isConnected = isInternetAvailable(context)
                     isLoading = false
                 }

@@ -4,10 +4,10 @@
     <selectionStates>
       <SelectionState runConfigName="app">
         <option name="selectionMode" value="DROPDOWN" />
-        <DropdownSelection timestamp="2024-10-18T09:38:13.187727500Z">
+        <DropdownSelection timestamp="2024-11-02T08:23:26.442994400Z">
           <Target type="DEFAULT_BOOT">
             <handle>
-              <DeviceId pluginId="LocalEmulator" identifier="path=C:\Users\nothi\.android\avd\phone_proof.avd" />
+              <DeviceId pluginId="PhysicalDevice" identifier="serial=R58RC2Y8FFR" />
             </handle>
           </Target>
         </DropdownSelection>

@@ -1,8 +1,8 @@
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.jetbrains.kotlin.android)
-//    id("kotlin-kapt")
-//    id("com.google.dagger.hilt.android")
+    id("kotlin-kapt")
+    id("com.google.dagger.hilt.android")
 }
 
 android {
@@ -69,6 +69,18 @@ dependencies {
     // livedata
     implementation(libs.androidx.runtime.livedata)
     implementation(libs.androidx.navigation.compose)
+
+    // Retrofit para las conexiones HTTP
+    implementation(libs.retrofit)
+    implementation(libs.converter.gson)
+
+    // Hilt para la inyección de dependencias
+    implementation(libs.hilt.android)
+    kapt(libs.hilt.compiler)
+    implementation(libs.androidx.hilt.navigation.compose)
+
+    // SwipeRefresh
+    implementation(libs.accompanist.swiperefresh)
 
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)

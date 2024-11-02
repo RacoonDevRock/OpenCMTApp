@@ -6,14 +6,44 @@ import android.widget.DatePicker
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.*
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.material.icons.filled.ArrowBackIosNew
+import androidx.compose.material.icons.filled.CalendarMonth
+import androidx.compose.material.icons.filled.Info
+import androidx.compose.material.icons.filled.KeyboardArrowDown
+import androidx.compose.material.icons.filled.KeyboardArrowUp
+import androidx.compose.material.icons.filled.Search
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.ModalBottomSheet
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextField
+import androidx.compose.material3.TextFieldDefaults
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -26,22 +56,34 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import androidx.navigation.NavHostController
 import com.cmt.openapp.R
 import com.cmt.openapp.core.navigation.Routes
-import com.cmt.openapp.research.ui.viewmodel.SearchViewModel
 import com.cmt.openapp.core.ui.shared.buttonNavigate.MyButton
 import com.cmt.openapp.core.ui.shared.dialog.InfoContent
 import com.cmt.openapp.core.ui.shared.dialog.TopDialogSheet
-import java.util.*
+import com.cmt.openapp.research.ui.viewmodel.SearchViewModel
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import java.util.Calendar
 
 @Composable
 fun ResearchScreen(
     modifier: Modifier = Modifier,
-    viewModel: SearchViewModel = SearchViewModel(),
+    viewModel: SearchViewModel = hiltViewModel(),
     navigationController: NavHostController,
 ) {
+    val uiState by viewModel.uiState.collectAsState()
+
+    LaunchedEffect(Unit) {
+        withContext(Dispatchers.IO) {
+            viewModel.loadAllIncidents()
+        }
+    }
+
     var isBottomSheetVisible by rememberSaveable { mutableStateOf(false) }
     var isTopDialogVisible by rememberSaveable { mutableStateOf(false) }
 
@@ -57,16 +99,44 @@ fun ResearchScreen(
                 }
             }
 
-            LazyColumn(
-                Modifier
-                    .fillMaxSize()
-                    .weight(1f),
-                horizontalAlignment = Alignment.CenterHorizontally
-            ) {
-                items(1) {
-                    IncidentBox({
-                        navigationController.navigate(Routes.DetailIncidentScreen.route)
-                    }, "1999", "03/08/2020", "10:29", "Consumo de licor en la vía pública")
+            when {
+                uiState.isLoading -> {
+                    Box(modifier = Modifier.fillMaxSize()) {
+                        CircularProgressIndicator(Modifier.align(Alignment.Center))
+                    }
+                }
+
+                uiState.errorMessage != null -> {
+                    uiState.errorMessage?.let { errorMessage ->
+                        Box(modifier = Modifier.fillMaxSize()) {
+                            Text(
+                                text = errorMessage,
+                                color = Color.Red,
+                                modifier = Modifier.align(Alignment.Center)
+                            )
+                        }
+                    }
+                }
+
+                else -> {
+                    LazyColumn(
+                        Modifier
+                            .fillMaxSize()
+                            .weight(1f),
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        items(uiState.incidents) { incident ->
+                            IncidentBox(
+                                {
+                                    navigationController.navigate(Routes.DetailIncidentScreen.route)
+                                },
+                                incident.nroIncidente,
+                                incident.fecha,
+                                incident.hora,
+                                incident.tipoIncidente
+                            )
+                        }
+                    }
                 }
             }
 
@@ -111,7 +181,8 @@ fun BottomSheetWithContent(viewModel: SearchViewModel, onDismiss: () -> Unit) {
 }
 
 @Composable
-fun BottomSheetContent(viewModel: SearchViewModel = SearchViewModel()) {
+fun BottomSheetContent(viewModel: SearchViewModel) {
+    val coroutineScope = rememberCoroutineScope()
     val context = LocalContext.current
     val calendar = Calendar.getInstance()
     val datePickerDialog = rememberDatePicker(context, calendar, viewModel)
@@ -155,8 +226,8 @@ fun BottomSheetContent(viewModel: SearchViewModel = SearchViewModel()) {
         )
 
         DropdownMenuField(
-            selectedOption = viewModel.sector,
-            onOptionSelected = { viewModel.sector = it },
+            selectedOption = viewModel.sect,
+            onOptionSelected = { viewModel.sect = it },
             label = stringResource(id = R.string.sector_field_filter),
             options = sectorOptions
         )
@@ -169,7 +240,16 @@ fun BottomSheetContent(viewModel: SearchViewModel = SearchViewModel()) {
         )
 
         MyButton(
-            { /* Acciones cuando se filtra */ },
+            {
+                coroutineScope.launch {
+                    viewModel.searchIncidents(
+                        fecha = viewModel.date,
+                        zona = viewModel.zone,
+                        sector = viewModel.sect,
+                        tipoIncidente = viewModel.accidentType
+                    )
+                }
+            },
             stringResource(id = R.string.filter_button),
             Icons.Default.Search
         )
@@ -303,7 +383,7 @@ fun IncidentBox(
     numberIncident: String,
     dateIncident: String,
     hourIncident: String,
-    motiveIncident: String,
+    typeIncident: String,
 ) {
     Box(
         modifier = Modifier
@@ -349,7 +429,7 @@ fun IncidentBox(
             }
             Spacer(modifier = Modifier.weight(1f))
             Text(
-                text = motiveIncident,
+                text = typeIncident,
                 fontWeight = FontWeight.ExtraBold,
                 fontSize = 14.sp,
                 color = Color.Black,

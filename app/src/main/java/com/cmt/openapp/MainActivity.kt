@@ -14,7 +14,9 @@ import androidx.navigation.compose.rememberNavController
 import com.cmt.openapp.core.navigation.AppNavGraph
 import com.cmt.openapp.core.network.CheckInternetScreen
 import com.cmt.openapp.ui.theme.OpenAppTheme
+import dagger.hilt.android.AndroidEntryPoint
 
+@AndroidEntryPoint
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
