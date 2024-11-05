@@ -1,7 +1,6 @@
 package com.cmt.openapp.research.data.network
 
 import com.cmt.openapp.research.data.network.response.IncidentResponse
-import com.cmt.openapp.research.data.network.response.IncidenteDTOResponse
 import retrofit2.Response
 import retrofit2.http.GET
 import retrofit2.http.Query

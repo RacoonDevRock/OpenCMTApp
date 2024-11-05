@@ -1,6 +1,7 @@
 package com.cmt.openapp.core.di
 
 import com.cmt.openapp.detail.data.network.DetailClient
+import com.cmt.openapp.report.data.network.ReportClient
 import com.cmt.openapp.research.data.network.SearchClient
 import dagger.Module
 import dagger.Provides
@@ -31,6 +32,12 @@ object NetworkModule {
     @Singleton
     fun provideDetailService(retrofit: Retrofit): DetailClient {
         return retrofit.create(DetailClient::class.java)
+    }
+
+    @Provides
+    @Singleton
+    fun provideReportService(retrofit: Retrofit): ReportClient {
+        return retrofit.create(ReportClient::class.java)
     }
 
 }

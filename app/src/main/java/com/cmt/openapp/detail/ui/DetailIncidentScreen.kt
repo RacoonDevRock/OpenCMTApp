@@ -1,6 +1,8 @@
 package com.cmt.openapp.detail.ui
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -12,8 +14,10 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ArrowBackIosNew
 import androidx.compose.material.icons.filled.FilePresent
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -27,12 +31,15 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.navigation.NavController
 import androidx.navigation.NavHostController
 import com.cmt.openapp.R
 import com.cmt.openapp.core.navigation.Routes
@@ -41,7 +48,8 @@ import com.cmt.openapp.core.ui.shared.dialog.InfoContent
 import com.cmt.openapp.core.ui.shared.dialog.TopDialogSheet
 import com.cmt.openapp.detail.data.network.response.IncidentDTODetail
 import com.cmt.openapp.detail.ui.viewmodel.DetailViewModel
-import com.cmt.openapp.research.ui.HeaderSection
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 
 @Composable
 fun DetailIncidentScreen(
@@ -53,7 +61,9 @@ fun DetailIncidentScreen(
     var isTopDialogVisible by rememberSaveable { mutableStateOf(false) }
 
     LaunchedEffect(Unit) {
-        viewModel.loadIncidentDetail(incidentId.toLong())
+        withContext(Dispatchers.IO) {
+            viewModel.loadIncidentDetail(incidentId.toLong())
+        }
     }
 
     val incidentDetail by viewModel.incidentDetail.collectAsState()
@@ -66,7 +76,7 @@ fun DetailIncidentScreen(
         Column(
             modifier = Modifier.fillMaxWidth()
         ) {
-            HeaderSection(navigationController) { isTopDialogVisible = true }
+            HeaderDetailAndReport(navigationController)
 
             Spacer(modifier = Modifier.height(20.dp))
 
@@ -78,8 +88,8 @@ fun DetailIncidentScreen(
 
             Spacer(modifier = Modifier.height(20.dp))
 
-            RequestedBox {
-                navigationController.navigate(Routes.ReportScreen.route)
+            RequestedBox(incidentId) { id ->
+                navigationController.navigate(Routes.ReportScreen.createRoute(id.toLong()))
             }
 
         }
@@ -90,6 +100,40 @@ fun DetailIncidentScreen(
             }
         }
     }
+}
+
+@Composable
+fun HeaderDetailAndReport(navController: NavController) {
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(140.dp)
+    ) {
+        IconBack(navController, Modifier.align(Alignment.TopStart))
+        Image(
+            painter = painterResource(id = R.drawable.open_logo_small),
+            contentDescription = "Logo CMT",
+            Modifier
+                .height(100.dp)
+                .padding(top = 10.dp)
+                .align(Alignment.Center),
+            contentScale = ContentScale.Fit
+        )
+    }
+
+    Spacer(modifier = Modifier.height(15.dp))
+}
+
+@Composable
+fun IconBack(navController: NavController, modifier: Modifier) {
+    Icon(
+        imageVector = Icons.Default.ArrowBackIosNew,
+        contentDescription = "Retroceso",
+        modifier = modifier
+            .padding(24.dp)
+            .clickable { navController.popBackStack() },
+        tint = MaterialTheme.colorScheme.tertiary
+    )
 }
 
 @Composable
@@ -120,7 +164,7 @@ fun IncidentDetailsContainer(incidentDetail: IncidentDTODetail) {
 }
 
 @Composable
-fun RequestedBox(navigate: () -> Unit) {
+fun RequestedBox(incidentId: String, navigateToReport: (String) -> Unit) {
     Box(
         modifier = Modifier
             .fillMaxWidth()
@@ -146,7 +190,7 @@ fun RequestedBox(navigate: () -> Unit) {
             )
             Spacer(modifier = Modifier.height(25.dp))
             MyButton(
-                navigate,
+                { navigateToReport(incidentId) },
                 stringResource(id = R.string.previous_button_report),
                 Icons.Default.FilePresent
             )

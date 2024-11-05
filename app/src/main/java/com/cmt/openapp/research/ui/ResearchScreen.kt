@@ -1,7 +1,6 @@
 package com.cmt.openapp.research.ui
 
 import android.app.DatePickerDialog
-import android.content.Context
 import android.widget.DatePicker
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -19,7 +18,6 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowBackIosNew
 import androidx.compose.material.icons.filled.CalendarMonth
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.KeyboardArrowDown
@@ -57,7 +55,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
-import androidx.navigation.NavController
+import androidx.lifecycle.viewModelScope
 import androidx.navigation.NavHostController
 import com.cmt.openapp.R
 import com.cmt.openapp.core.navigation.Routes
@@ -67,7 +65,6 @@ import com.cmt.openapp.core.ui.shared.dialog.TopDialogSheet
 import com.cmt.openapp.research.ui.viewmodel.SearchViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 import java.util.Calendar
 
 @Composable
@@ -79,9 +76,7 @@ fun ResearchScreen(
     val uiState by viewModel.uiState.collectAsState()
 
     LaunchedEffect(Unit) {
-        withContext(Dispatchers.IO) {
-            viewModel.loadAllIncidents()
-        }
+        viewModel.loadAllIncidents()
     }
 
     var isBottomSheetVisible by rememberSaveable { mutableStateOf(false) }
@@ -93,7 +88,7 @@ fun ResearchScreen(
             .padding(bottom = 16.dp)
     ) {
         Column(modifier = Modifier.fillMaxSize()) {
-            HeaderSection(navigationController) {
+            HeaderResearch {
                 if (!isBottomSheetVisible) {
                     isTopDialogVisible = true
                 }
@@ -185,11 +180,37 @@ fun BottomSheetContent(viewModel: SearchViewModel) {
     val coroutineScope = rememberCoroutineScope()
     val context = LocalContext.current
     val calendar = Calendar.getInstance()
-    val datePickerDialog = rememberDatePicker(context, calendar, viewModel)
+    val datePickerDialog = remember {
 
-    val zoneOptions = listOf("Ayacucho", "El Alambre", "La Noria")
-    val sectorOptions = listOf("Sector A", "Sector B", "Sector C")
-    val accidentTypeOptions = listOf("Manu chipi", "Diego violado", "Flavio penetrado")
+        val maxDate = Calendar.getInstance().apply {
+            set(Calendar.YEAR, 2024)
+            set(Calendar.MONTH, 3)
+            set(Calendar.DAY_OF_MONTH, 1)
+        }
+
+        val minDate = Calendar.getInstance().apply {
+            set(Calendar.YEAR, 2020)
+            set(Calendar.MONTH, 3)
+            set(Calendar.DAY_OF_MONTH, 1)
+        }
+
+        DatePickerDialog(
+            context,
+            { _: DatePicker, year: Int, month: Int, dayOfMonth: Int ->
+                viewModel.date = "$dayOfMonth/${month + 1}/$year"
+            },
+            calendar.get(Calendar.YEAR),
+            calendar.get(Calendar.MONTH),
+            calendar.get(Calendar.DAY_OF_MONTH)
+        ).apply {
+            datePicker.minDate = minDate.timeInMillis
+            datePicker.maxDate = maxDate.timeInMillis
+        }
+    }
+
+    val zoneOptions = remember { listOf("Ayacucho", "El Alambre", "La Noria") }
+    val sectorOptions = remember { listOf("Sector A", "Sector B", "Sector C") }
+    val accidentTypeOptions = remember { listOf("Manu chipi", "Diego violado", "Flavio penetrado") }
 
     Column(
         modifier = Modifier
@@ -241,7 +262,7 @@ fun BottomSheetContent(viewModel: SearchViewModel) {
 
         MyButton(
             {
-                coroutineScope.launch {
+                viewModel.viewModelScope.launch(Dispatchers.IO) {
                     viewModel.searchIncidents(
                         fecha = viewModel.date,
                         zona = viewModel.zone,
@@ -331,13 +352,12 @@ fun DropdownMenuField(
 }
 
 @Composable
-fun HeaderSection(navController: NavController, onInfoClick: () -> Unit) {
+fun HeaderResearch(onInfoClick: () -> Unit) {
     Box(
         modifier = Modifier
             .fillMaxWidth()
             .height(140.dp)
     ) {
-        IconBack(navController, Modifier.align(Alignment.TopStart))
         Image(
             painter = painterResource(id = R.drawable.open_logo_small),
             contentDescription = "Logo CMT",
@@ -351,18 +371,6 @@ fun HeaderSection(navController: NavController, onInfoClick: () -> Unit) {
     }
 
     Spacer(modifier = Modifier.height(15.dp))
-}
-
-@Composable
-fun IconBack(navController: NavController, modifier: Modifier) {
-    Icon(
-        imageVector = Icons.Default.ArrowBackIosNew,
-        contentDescription = "Retroceso",
-        modifier = modifier
-            .padding(24.dp)
-            .clickable { navController.popBackStack() },
-        tint = MaterialTheme.colorScheme.tertiary
-    )
 }
 
 @Composable
@@ -385,6 +393,9 @@ fun IncidentBox(
     hourIncident: String,
     typeIncident: String,
 ) {
+    val rememberedDateIncident = remember { dateIncident }
+    val rememberedHourIncident = remember { hourIncident }
+    val rememberedTypeIncident = remember { typeIncident }
     Box(
         modifier = Modifier
             .fillMaxWidth()
@@ -412,14 +423,14 @@ fun IncidentBox(
                 )
                 Spacer(modifier = Modifier.weight(1f))
                 Text(
-                    text = dateIncident,
+                    text = rememberedDateIncident,
                     fontWeight = FontWeight.ExtraBold,
                     fontSize = 14.sp,
                     color = Color.Black,
                     lineHeight = 20.sp
                 )
                 Text(
-                    text = hourIncident,
+                    text = rememberedHourIncident,
                     fontWeight = FontWeight.ExtraBold,
                     fontSize = 14.sp,
                     color = Color.Black,
@@ -429,7 +440,7 @@ fun IncidentBox(
             }
             Spacer(modifier = Modifier.weight(1f))
             Text(
-                text = typeIncident,
+                text = rememberedTypeIncident,
                 fontWeight = FontWeight.ExtraBold,
                 fontSize = 14.sp,
                 color = Color.Black,
@@ -438,38 +449,6 @@ fun IncidentBox(
                     .fillMaxWidth()
             )
         }
-    }
-}
-
-@Composable
-fun rememberDatePicker(
-    context: Context,
-    calendar: Calendar,
-    viewModel: SearchViewModel,
-): DatePickerDialog {
-    // fecha actual
-    val currentDate = Calendar.getInstance()
-
-    // fecha minima
-//    val minDate = Calendar.getInstance().apply {
-//        set(Calendar.YEAR, 2018)
-//        set(Calendar.MONTH, 0)
-//        set(Calendar.DAY_OF_MONTH, 1)
-//    }
-
-    return DatePickerDialog(
-        context,
-        { _: DatePicker, year: Int, month: Int, dayOfMonth: Int ->
-            viewModel.date = "$dayOfMonth/${month + 1}/$year"
-        },
-        calendar.get(Calendar.YEAR),
-        calendar.get(Calendar.MONTH),
-        calendar.get(Calendar.DAY_OF_MONTH)
-    ).apply {
-//        setOnDismissListener {  }
-        // aplican y establecen fecha minimas y maxima
-//        datePicker.minDate = minDate.timeInMillis // metodos (datePicker.minDate)
-        datePicker.maxDate = currentDate.timeInMillis // metodos (datePicker.maxDate)
     }
 }
 

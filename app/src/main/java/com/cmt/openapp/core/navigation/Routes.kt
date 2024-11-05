@@ -6,5 +6,7 @@ sealed class Routes(val route: String) {
     object DetailIncidentScreen : Routes("detailIncidentScreen") {
         fun createRoute(incidentId: String) = "detailIncidentScreen/$incidentId"
     }
-    object ReportScreen : Routes("reportScreen")
+    object ReportScreen : Routes("reportScreen") {
+        fun createRoute(incidentId: Long) = "reportScreen/$incidentId"
+    }
 }
