@@ -80,11 +80,15 @@ fun DetailIncidentScreen(
 
             Spacer(modifier = Modifier.height(20.dp))
 
-            Box(modifier = Modifier.weight(1f), contentAlignment = Alignment.Center) {
-                incidentDetail?.let {
+
+            incidentDetail?.let {
+                Box(modifier = Modifier.weight(1f), contentAlignment = Alignment.Center) {
                     IncidentDetailsContainer(it)
-                } ?: CircularProgressIndicator()
+                }
+            } ?: Box(modifier = Modifier.weight(1f), contentAlignment = Alignment.Center) {
+                CircularProgressIndicator()
             }
+
 
             Spacer(modifier = Modifier.height(20.dp))
 
@@ -150,7 +154,11 @@ fun IncidentDetailsContainer(incidentDetail: IncidentDTODetail) {
                 .fillMaxWidth()
                 .padding(horizontal = 20.dp, vertical = 20.dp)
         ) {
-            IncidentHeader(incidentDetail.nroIncidente, incidentDetail.fecha, incidentDetail.horallamada)
+            IncidentHeader(
+                incidentDetail.nroIncidente,
+                incidentDetail.fecha,
+                incidentDetail.horallamada
+            )
             Spacer(modifier = Modifier.height(15.dp))
             IncidentDetails(
                 incidentDetail.tipoIncidente,

@@ -1,6 +1,5 @@
 package com.cmt.openapp.research.ui.viewmodel
 
-import android.util.Log
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
@@ -8,6 +7,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.cmt.openapp.research.data.SearchRepository
 import com.cmt.openapp.research.data.network.response.IncidenteDTOResponse
+import com.cmt.openapp.research.data.network.response.SectorDTO
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -27,27 +27,28 @@ class SearchViewModel @Inject constructor(private val repository: SearchReposito
     private val _uiState = MutableStateFlow(IncidentUIState())
     val uiState: StateFlow<IncidentUIState> = _uiState
 
-    var date by mutableStateOf("")
-    var zone by mutableStateOf("")
-    var sect by mutableStateOf("")
-    var accidentType by mutableStateOf("")
+    var date by mutableStateOf<String?>(null)
+    var zone by mutableStateOf<String?>(null)
+    var sect by mutableStateOf<String?>(null)
+    var accidentType by mutableStateOf<String?>(null)
+
+    private val _sectores = MutableStateFlow<List<SectorDTO>>(emptyList())
+    val sectores: StateFlow<List<SectorDTO>> = _sectores
 
     init {
-        loadAllIncidents()
+        searchIncidents()
     }
 
-    fun loadAllIncidents() {
+    fun searchIncidents() {
         viewModelScope.launch(Dispatchers.IO) {
             _uiState.value = _uiState.value.copy(isLoading = true)
             runCatching {
-                repository.getAllIncidents()
+                repository.searchIncidents(date, zone, sect, accidentType)
             }.onSuccess { response ->
                 if (response.isSuccessful) {
-                    _uiState.value = IncidentUIState(incidents = response.body() ?: emptyList())
+                    _uiState.value = IncidentUIState(response.body() ?: emptyList())
                 } else {
-                    _uiState.value =
-                        _uiState.value.copy(errorMessage = "Error al cargar los incidentes")
-                    Log.d("ResponseStatus", "Error code: ${response.code()}")
+                    _uiState.value = _uiState.value.copy(errorMessage = "Error en la búsqueda")
                 }
             }.onFailure {
                 _uiState.value = _uiState.value.copy(errorMessage = "Error de red")
@@ -56,26 +57,16 @@ class SearchViewModel @Inject constructor(private val repository: SearchReposito
         }
     }
 
-    fun searchIncidents(
-        fecha: String? = date,
-        zona: String? = zone,
-        sector: String? = sect,
-        tipoIncidente: String? = accidentType,
-    ) {
-        viewModelScope.launch(Dispatchers.IO) {
-            _uiState.value = _uiState.value.copy(isLoading = true)
-            runCatching {
-                repository.searchIncidents(fecha, zona, sector, tipoIncidente)
-            }.onSuccess { response ->
-                if (response.isSuccessful) {
-                    _uiState.value = IncidentUIState(incidents = response.body() ?: emptyList())
-                } else {
-                    _uiState.value = _uiState.value.copy(errorMessage = "Error en la búsqueda")
-                }
-            }.onFailure {
-                _uiState.value = _uiState.value.copy(errorMessage = "Error de red")
+    fun obtenerSectoresPorZona(zona: String) {
+        _sectores.value = emptyList() // Limpia la lista antes de cargar nuevos sectores
+        viewModelScope.launch {
+            val response = repository.obtenerSectoresPorZona(zona)
+            if (response.isSuccessful) {
+                _sectores.value = response.body() ?: emptyList()
+            } else {
+                // Manejar el error según tu lógica de negocio
+                _uiState.value = _uiState.value.copy(errorMessage = "Error al cargar sectores")
             }
-            _uiState.value = _uiState.value.copy(isLoading = false)
         }
     }
 }

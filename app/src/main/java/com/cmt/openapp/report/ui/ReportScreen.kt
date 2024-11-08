@@ -16,7 +16,6 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.FilePresent
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
@@ -50,7 +49,6 @@ import com.cmt.openapp.core.ui.shared.dialog.InfoContent
 import com.cmt.openapp.core.ui.shared.dialog.TopDialogSheet
 import com.cmt.openapp.core.ui.shared.loading.LoadingScreen
 import com.cmt.openapp.detail.ui.HeaderDetailAndReport
-import com.cmt.openapp.report.data.network.response.SolicitudRequest
 import com.cmt.openapp.report.ui.viewmodel.ReportViewModel
 
 @Composable
@@ -63,6 +61,11 @@ fun ReportScreen(
     var isTopDialogVisible by rememberSaveable { mutableStateOf(false) }
     val isLoading by viewModel.isLoading.collectAsState(false)
     val submissionMessage by viewModel.submissionMessage.collectAsState()
+
+    submissionMessage?.takeIf { it != "Solicitud enviada" && it.isNotBlank() }?.let { message ->
+        viewModel.resetNavigation()
+        Toast.makeText(LocalContext.current, message, Toast.LENGTH_SHORT).show()
+    }
 
     Box(
         modifier = modifier
@@ -79,7 +82,7 @@ fun ReportScreen(
 
                 BoxRequest(
                     Modifier.fillMaxSize(),
-                    { navigationController.navigate(Routes.HomeScreen.route) },
+                    { navigationController.navigate(Routes.ResearchScreen.route) },
                     viewModel = viewModel,
                     incidentId = incidentId
                 )
@@ -91,10 +94,9 @@ fun ReportScreen(
                 }
             }
 
-            submissionMessage?.let {
-                // Muestra el mensaje de éxito/error
-                Toast.makeText(LocalContext.current, it, Toast.LENGTH_SHORT).show()
+            submissionMessage?.takeIf { it != "Solicitud enviada" && it.isNotBlank() }?.let { message ->
                 viewModel.resetNavigation()
+                Toast.makeText(LocalContext.current, message, Toast.LENGTH_SHORT).show()
             }
         }
     }
@@ -115,7 +117,7 @@ fun BoxRequest(
     val phone: String by viewModel.phone.observeAsState("")
     val motive: String by viewModel.motive.observeAsState("")
 
-    val onSubmit = { viewModel.solicitarAccesoIncidente(incidentId) }
+    val onSubmit = { viewModel.solicitarAccesoIncidente(incidentId) { navigate() } }
 
     Box(
         modifier = modifier
@@ -240,7 +242,7 @@ fun TextFieldRequest(
     label: String,
     value: String,
     onValueChange: (String) -> Unit,
-    keyboardType: KeyboardType
+    keyboardType: KeyboardType,
 ) {
     TextField(
         value = value,

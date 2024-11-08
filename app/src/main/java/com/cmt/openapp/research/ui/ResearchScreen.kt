@@ -1,7 +1,7 @@
 package com.cmt.openapp.research.ui
 
 import android.app.DatePickerDialog
-import android.widget.DatePicker
+import android.widget.Toast
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -23,7 +23,6 @@ import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.KeyboardArrowUp
 import androidx.compose.material.icons.filled.Search
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -39,7 +38,6 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -55,16 +53,16 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
-import androidx.lifecycle.viewModelScope
 import androidx.navigation.NavHostController
 import com.cmt.openapp.R
 import com.cmt.openapp.core.navigation.Routes
 import com.cmt.openapp.core.ui.shared.buttonNavigate.MyButton
 import com.cmt.openapp.core.ui.shared.dialog.InfoContent
 import com.cmt.openapp.core.ui.shared.dialog.TopDialogSheet
+import com.cmt.openapp.core.ui.shared.loading.LoadingScreen
 import com.cmt.openapp.research.ui.viewmodel.SearchViewModel
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
+import com.google.accompanist.swiperefresh.SwipeRefresh
+import com.google.accompanist.swiperefresh.rememberSwipeRefreshState
 import java.util.Calendar
 
 @Composable
@@ -74,89 +72,94 @@ fun ResearchScreen(
     navigationController: NavHostController,
 ) {
     val uiState by viewModel.uiState.collectAsState()
-
-    LaunchedEffect(Unit) {
-        viewModel.loadAllIncidents()
-    }
-
     var isBottomSheetVisible by rememberSaveable { mutableStateOf(false) }
     var isTopDialogVisible by rememberSaveable { mutableStateOf(false) }
+    val swipeRefreshState = rememberSwipeRefreshState(isRefreshing = uiState.isLoading)
 
-    Box(
-        modifier = modifier
-            .fillMaxSize()
-            .padding(bottom = 16.dp)
-    ) {
-        Column(modifier = Modifier.fillMaxSize()) {
-            HeaderResearch {
-                if (!isBottomSheetVisible) {
-                    isTopDialogVisible = true
+    LaunchedEffect(Unit) {
+        viewModel.searchIncidents()
+    }
+
+    SwipeRefresh(
+        state = swipeRefreshState,
+        onRefresh = { viewModel.searchIncidents() }) {
+
+        when {
+            uiState.isLoading && !swipeRefreshState.isRefreshing -> {
+                LoadingScreen()
+            }
+
+            uiState.errorMessage != null -> {
+                uiState.errorMessage?.let { errorMessage ->
+                    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                        Text(
+                            text = errorMessage,
+                            color = Color.Red,
+                            modifier = Modifier.align(Alignment.Center)
+                        )
+                    }
                 }
             }
 
-            when {
-                uiState.isLoading -> {
-                    Box(modifier = Modifier.fillMaxSize()) {
-                        CircularProgressIndicator(Modifier.align(Alignment.Center))
-                    }
-                }
+            else -> {
+                Box(modifier = modifier.fillMaxSize()) {
+                    Column(modifier = Modifier.fillMaxSize()) {
+                        HeaderResearch {
+                            if (!isBottomSheetVisible) {
+                                isTopDialogVisible = true
+                            }
+                        }
 
-                uiState.errorMessage != null -> {
-                    uiState.errorMessage?.let { errorMessage ->
-                        Box(modifier = Modifier.fillMaxSize()) {
-                            Text(
-                                text = errorMessage,
-                                color = Color.Red,
-                                modifier = Modifier.align(Alignment.Center)
-                            )
+                        LazyColumn(
+                            Modifier
+                                .fillMaxSize()
+                                .weight(1f),
+                            horizontalAlignment = Alignment.CenterHorizontally
+                        ) {
+                            items(uiState.incidents) { incident ->
+                                IncidentBox(
+                                    {
+                                        navigationController.navigate(
+                                            Routes.DetailIncidentScreen.createRoute(
+                                                incident.nroIncidente
+                                            )
+                                        )
+                                    },
+                                    incident.nroIncidente,
+                                    incident.fecha,
+                                    incident.hora,
+                                    incident.tipoIncidente
+                                )
+                            }
+                        }
+
+                        Spacer(modifier = Modifier.height(75.dp))
+
+                    }
+
+                    if (isBottomSheetVisible) {
+                        BottomSheetWithContent(
+                            viewModel,
+                            onDismiss = { isBottomSheetVisible = false })
+                    } else if (isTopDialogVisible) { // Verifica que no haya un BottomSheet visible antes de mostrar el diálogo
+                        TopDialogSheet(onDismissRequest = { isTopDialogVisible = false }) {
+                            InfoContent()
                         }
                     }
-                }
 
-                else -> {
-                    LazyColumn(
-                        Modifier
-                            .fillMaxSize()
-                            .weight(1f),
-                        horizontalAlignment = Alignment.CenterHorizontally
-                    ) {
-                        items(uiState.incidents) { incident ->
-                            IncidentBox(
-                                {
-                                    navigationController.navigate(Routes.DetailIncidentScreen.createRoute(incident.nroIncidente))
-                                },
-                                incident.nroIncidente,
-                                incident.fecha,
-                                incident.hora,
-                                incident.tipoIncidente
-                            )
-                        }
-                    }
+                    MyButton(
+                        navigate = {
+                            if (!isTopDialogVisible) {
+                                isBottomSheetVisible = true
+                            }
+                        },
+                        textButton = stringResource(id = R.string.message_filter),
+                        myIconButton = Icons.Default.Search,
+                        modifier = Modifier.align(Alignment.BottomCenter)
+                    )
                 }
             }
-
-            Spacer(modifier = Modifier.height(75.dp))
         }
-
-        if (isBottomSheetVisible) {
-            BottomSheetWithContent(viewModel, onDismiss = { isBottomSheetVisible = false })
-        } else if (isTopDialogVisible) { // Verifica que no haya un BottomSheet visible antes de mostrar el diálogo
-            TopDialogSheet(onDismissRequest = { isTopDialogVisible = false }) {
-                InfoContent()
-            }
-        }
-
-        MyButton(
-            navigate = {
-                if (!isTopDialogVisible) {
-                    isBottomSheetVisible = true
-                }
-            },
-            textButton = "Mostrar Filtros",
-            myIconButton = Icons.Default.Search,
-            modifier = Modifier.align(Alignment.BottomCenter)
-        )
-
     }
 }
 
@@ -171,47 +174,12 @@ fun BottomSheetWithContent(viewModel: SearchViewModel, onDismiss: () -> Unit) {
         contentColor = Color.Black,
         shape = RoundedCornerShape(topStart = 110.dp, topEnd = 110.dp)
     ) {
-        BottomSheetContent(viewModel)
+        BottomSheetContent(viewModel, onDismiss)
     }
 }
 
 @Composable
-fun BottomSheetContent(viewModel: SearchViewModel) {
-    val coroutineScope = rememberCoroutineScope()
-    val context = LocalContext.current
-    val calendar = Calendar.getInstance()
-    val datePickerDialog = remember {
-
-        val maxDate = Calendar.getInstance().apply {
-            set(Calendar.YEAR, 2024)
-            set(Calendar.MONTH, 3)
-            set(Calendar.DAY_OF_MONTH, 1)
-        }
-
-        val minDate = Calendar.getInstance().apply {
-            set(Calendar.YEAR, 2020)
-            set(Calendar.MONTH, 3)
-            set(Calendar.DAY_OF_MONTH, 1)
-        }
-
-        DatePickerDialog(
-            context,
-            { _: DatePicker, year: Int, month: Int, dayOfMonth: Int ->
-                viewModel.date = "$dayOfMonth/${month + 1}/$year"
-            },
-            calendar.get(Calendar.YEAR),
-            calendar.get(Calendar.MONTH),
-            calendar.get(Calendar.DAY_OF_MONTH)
-        ).apply {
-            datePicker.minDate = minDate.timeInMillis
-            datePicker.maxDate = maxDate.timeInMillis
-        }
-    }
-
-    val zoneOptions = remember { listOf("Ayacucho", "El Alambre", "La Noria") }
-    val sectorOptions = remember { listOf("Sector A", "Sector B", "Sector C") }
-    val accidentTypeOptions = remember { listOf("Manu chipi", "Diego violado", "Flavio penetrado") }
-
+fun BottomSheetContent(viewModel: SearchViewModel, onDismiss: () -> Unit) {
     Column(
         modifier = Modifier
             .fillMaxWidth()
@@ -223,53 +191,20 @@ fun BottomSheetContent(viewModel: SearchViewModel) {
             fontWeight = FontWeight.ExtraBold,
             modifier = Modifier.align(Alignment.CenterHorizontally)
         )
-        Spacer(modifier = Modifier.height(16.dp))
+        Spacer(modifier = Modifier.height(10.dp))
 
-        MyTextField(
-            viewModel.date,
-            { viewModel.date = it },
-            stringResource(id = R.string.date_field_filter),
-            {
-                Icon(
-                    imageVector = Icons.Default.CalendarMonth,
-                    contentDescription = "Abrir selector de fecha",
-                    Modifier.clickable { datePickerDialog.show() }
-                )
-            },
-            Modifier.align(Alignment.CenterHorizontally)
-        )
+        DateDropDown(viewModel.date) { viewModel.date = it }
 
-        DropdownMenuField(
-            selectedOption = viewModel.zone,
-            onOptionSelected = { viewModel.zone = it },
-            label = stringResource(id = R.string.zone_field_filter),
-            options = zoneOptions
-        )
+        ZoneDropDown(viewModel.zone) { viewModel.zone = it }
 
-        DropdownMenuField(
-            selectedOption = viewModel.sect,
-            onOptionSelected = { viewModel.sect = it },
-            label = stringResource(id = R.string.sector_field_filter),
-            options = sectorOptions
-        )
+        SectorDropDown(viewModel.sect, { viewModel.sect = it }, viewModel)
 
-        DropdownMenuField(
-            selectedOption = viewModel.accidentType,
-            onOptionSelected = { viewModel.accidentType = it },
-            label = stringResource(id = R.string.incident_type_field_filter),
-            options = accidentTypeOptions
-        )
+        IncidentTypeDropDown(viewModel.accidentType) { viewModel.accidentType = it }
 
         MyButton(
             {
-                viewModel.viewModelScope.launch(Dispatchers.IO) {
-                    viewModel.searchIncidents(
-                        fecha = viewModel.date,
-                        zona = viewModel.zone,
-                        sector = viewModel.sect,
-                        tipoIncidente = viewModel.accidentType
-                    )
-                }
+                viewModel.searchIncidents()
+                onDismiss()
             },
             stringResource(id = R.string.filter_button),
             Icons.Default.Search
@@ -279,76 +214,195 @@ fun BottomSheetContent(viewModel: SearchViewModel) {
 }
 
 @Composable
-fun DropdownMenuField(
-    selectedOption: String,
-    onOptionSelected: (String) -> Unit,
-    label: String,
-    options: List<String>,
-    modifier: Modifier = Modifier,
-) {
-    var expanded by remember { mutableStateOf(false) } // Controla si el menú está desplegado
+fun IncidentTypeDropDown(selectedIncidentType: String?, onIncidentTypeSelected: (String?) -> Unit) {
+    var expanded by rememberSaveable { mutableStateOf(false) }
+    val incidentOptions = mapOf(
+        "Consumo de licor en la vía pública" to "CONSUMO DE LICOR EN VÍA PUBLICA",
+        "Personas en actitud sospechosa" to "PERSONAS EN ACTITUD SOSPECHOSA",
+        "Todos los incidentes" to null
+    )
 
-    Box(modifier = modifier.width(300.dp)) {
-        // TextField personalizado
-        TextField(
-            value = selectedOption,
-            onValueChange = { /* No permitido ya que es solo seleccionable */ },
-            readOnly = true,
-            label = {
-                Text(
-                    text = label,
-                    fontWeight = FontWeight.ExtraBold,
-                    fontSize = 14.sp,
-                    lineHeight = 15.sp,
-                    color = MaterialTheme.colorScheme.tertiary
-                )
-            },
-            textStyle = TextStyle(
-                fontSize = 14.sp,
-                lineHeight = 15.sp,
-                color = Color.Black
-            ),
+    Box {
+
+        MyTextField(
+            incidentOptions.entries.find { it.value == selectedIncidentType }?.key
+                ?: "Tipo de Incidente",
+            {},
+            placeholder = stringResource(id = R.string.incident_type_field_filter),
             trailingIcon = {
                 Icon(
-                    imageVector = if (expanded) Icons.Filled.KeyboardArrowUp else Icons.Filled.KeyboardArrowDown,
-                    contentDescription = "arrow selected",
-                    tint = MaterialTheme.colorScheme.tertiary
+                    imageVector = if (expanded) Icons.Default.KeyboardArrowUp else Icons.Default.KeyboardArrowDown,
+                    contentDescription = "",
+                    modifier = Modifier.clickable { expanded = true }
                 )
             },
-            modifier = modifier
-                .fillMaxWidth()
-                .padding(bottom = 10.dp)
-                .fillMaxWidth()
-                .clickable { expanded = !expanded }, // Abre o cierra el menú al hacer clic
-            colors = TextFieldDefaults.colors(
-                focusedContainerColor = Color.White,
-                unfocusedContainerColor = Color.White,
-                unfocusedTextColor = MaterialTheme.colorScheme.tertiary,
-                unfocusedTrailingIconColor = MaterialTheme.colorScheme.tertiary,
-                focusedTrailingIconColor = MaterialTheme.colorScheme.tertiary,
-                focusedIndicatorColor = Color.Transparent,
-                unfocusedIndicatorColor = Color.Transparent
-            ),
-            shape = RoundedCornerShape(24.dp)
+            Modifier.fillMaxWidth()
         )
-
-        // Menú desplegable personalizado
         DropdownMenu(
             expanded = expanded,
             onDismissRequest = { expanded = false },
             modifier = Modifier
-                .fillMaxWidth()
+                .background(color = Color.White)
+                .align(Alignment.Center),
         ) {
-            options.forEach { option ->
-                DropdownMenuItem(
-                    text = { Text(option, color = MaterialTheme.colorScheme.onPrimaryContainer) },
-                    onClick = {
-                        onOptionSelected(option)
-                        expanded = false // Cierra el menú al seleccionar una opción
-                    })
+            incidentOptions.forEach { (displayText, value) ->
+                DropdownMenuItem(onClick = {
+                    onIncidentTypeSelected(value)
+                    expanded = false
+                },
+                    text = { Text(text = displayText, color = MaterialTheme.colorScheme.tertiary) }
+                )
             }
         }
     }
+
+}
+
+@Composable
+fun SectorDropDown(
+    selectedSector: String?,
+    onSectorSelected: (String?) -> Unit,
+    viewModel: SearchViewModel,
+) {
+    var expanded by rememberSaveable { mutableStateOf(false) }
+    val sectores by viewModel.sectores.collectAsState()
+    val context = LocalContext.current
+
+    Box {
+
+        MyTextField(
+            sectores.find { it.titulo == selectedSector }?.titulo ?: "Sector",
+            {},
+            placeholder = stringResource(id = R.string.sector_field_filter),
+            trailingIcon = {
+                Icon(
+                    imageVector = if (expanded) Icons.Default.KeyboardArrowUp else Icons.Default.KeyboardArrowDown,
+                    contentDescription = "",
+                    modifier = Modifier.clickable {
+                        if (!viewModel.zone.isNullOrEmpty()) {
+                            expanded = true
+                            viewModel.obtenerSectoresPorZona(viewModel.zone!!)
+                        } else {
+                            Toast.makeText(context, "Seleccione una zona", Toast.LENGTH_SHORT).show()
+                        }
+                    }
+                )
+            },
+            Modifier.fillMaxWidth()
+        )
+        DropdownMenu(
+            expanded = expanded,
+            onDismissRequest = { expanded = false },
+            modifier = Modifier
+                .background(color = Color.White)
+                .align(Alignment.Center),
+        ) {
+            sectores.forEach { sector ->
+                DropdownMenuItem(onClick = {
+                    onSectorSelected(sector.titulo)
+                    expanded = false
+                },
+                    text = {
+                        Text(
+                            text = sector.titulo,
+                            color = MaterialTheme.colorScheme.tertiary
+                        )
+                    }
+                )
+            }
+        }
+    }
+}
+
+@Composable
+fun ZoneDropDown(selectedZone: String?, onZoneSelected: (String?) -> Unit) {
+    var expanded by rememberSaveable { mutableStateOf(false) }
+    val zoneOptions = mapOf(
+        "Todas las zonas" to null,
+        "El Alambre" to "ALAMBRE",
+        "Ayacucho" to "AYACUCHO",
+        "La Noria" to "NORIA"
+    )
+
+    Box {
+
+        MyTextField(
+            zoneOptions.entries.find { it.value == selectedZone }?.key ?: "Zona",
+            {},
+            placeholder = stringResource(id = R.string.zone_field_filter),
+            trailingIcon = {
+                Icon(
+                    imageVector = if (expanded) Icons.Default.KeyboardArrowUp else Icons.Default.KeyboardArrowDown,
+                    contentDescription = "",
+                    modifier = Modifier.clickable { expanded = true }
+                )
+            },
+            Modifier.fillMaxWidth()
+        )
+        DropdownMenu(
+            expanded = expanded,
+            onDismissRequest = { expanded = false },
+            modifier = Modifier
+                .background(color = Color.White)
+                .align(Alignment.Center),
+        ) {
+            zoneOptions.forEach { (displayText, value) ->
+                DropdownMenuItem(onClick = {
+                    onZoneSelected(value)
+                    expanded = false
+                },
+                    text = { Text(text = displayText, color = MaterialTheme.colorScheme.tertiary) }
+                )
+            }
+        }
+    }
+
+}
+
+@Composable
+fun DateDropDown(selectedDate: String?, onDateSelected: (String?) -> Unit) {
+    val context = LocalContext.current
+    val calendar = Calendar.getInstance()
+    val datePickerDialog = remember {
+        DatePickerDialog(
+            context,
+            { _, year, month, dayOfMonth ->
+                val formattedDate = "$year-${(month + 1).toString().padStart(2, '0')}-${
+                    dayOfMonth.toString().padStart(2, '0')
+                }"
+                onDateSelected(formattedDate)
+            },
+            calendar.get(Calendar.YEAR),
+            calendar.get(Calendar.MONTH),
+            calendar.get(Calendar.DAY_OF_MONTH)
+        ).apply {
+            datePicker.minDate = Calendar.getInstance().apply {
+                set(Calendar.YEAR, 2020)
+                set(Calendar.MONTH, 2)
+                set(Calendar.DAY_OF_MONTH, 1)
+            }.timeInMillis
+
+            datePicker.maxDate = Calendar.getInstance().apply {
+                set(Calendar.YEAR, 2024)
+                set(Calendar.MONTH, 3)
+                set(Calendar.DAY_OF_MONTH, 1)
+            }.timeInMillis
+        }
+    }
+
+    MyTextField(
+        selectedDate ?: "Fecha",
+        {},
+        placeholder = stringResource(id = R.string.date_field_filter),
+        trailingIcon = {
+            Icon(
+                imageVector = Icons.Default.CalendarMonth,
+                contentDescription = "",
+                Modifier.clickable { datePickerDialog.show() }
+            )
+        },
+        Modifier.fillMaxWidth()
+    )
 }
 
 @Composable
@@ -461,7 +515,7 @@ fun MyTextField(
     modifier: Modifier,
 ) {
     TextField(
-        value = value,
+        value = value ?: "",
         onValueChange = onValueChange,
         placeholder = {
             Text(
@@ -479,8 +533,8 @@ fun MyTextField(
         ),
         readOnly = true,
         modifier = modifier
-            .padding(bottom = 10.dp)
-            .width(300.dp),
+            .padding(start = 30.dp, end = 30.dp, bottom = 13.dp)
+            .height(50.dp),
         trailingIcon = trailingIcon,
         colors = TextFieldDefaults.colors(
             focusedContainerColor = Color.White,

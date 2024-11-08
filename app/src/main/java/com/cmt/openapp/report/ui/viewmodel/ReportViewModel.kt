@@ -1,6 +1,5 @@
 package com.cmt.openapp.report.ui.viewmodel
 
-import android.util.Log
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
@@ -45,10 +44,10 @@ class ReportViewModel @Inject constructor(private val repository: ReportReposito
     private val _isLoading = MutableStateFlow(false)
     val isLoading: StateFlow<Boolean> = _isLoading
 
-    private val _submissionMessage = MutableStateFlow<String?>("")
+    private val _submissionMessage = MutableStateFlow<String?>(null)
     val submissionMessage: StateFlow<String?> = _submissionMessage
 
-    fun solicitarAccesoIncidente(id: Long) {
+    fun solicitarAccesoIncidente(id: Long, onSuccess: () -> Unit) {
         val solicitudRequest = SolicitudRequest(
             nombreCompleto = name.value.orEmpty(),
             identificador = idt.value.orEmpty(),
@@ -62,34 +61,23 @@ class ReportViewModel @Inject constructor(private val repository: ReportReposito
         if (validateFields(solicitudRequest)) {
             viewModelScope.launch(Dispatchers.IO) {
                 _isLoading.value = true
-                Log.d("ReportViewModel", "Inicio de la solicitud de acceso")
-
                 try {
                     val response = repository.solicitarIncidente(id, solicitudRequest)
                     withContext(Dispatchers.Main) {
                         if (response.isSuccessful) {
                             _submissionMessage.value = "Solicitud enviada"
-                            Log.d("ReportViewModel", "Solicitud exitosa")
+                            onSuccess()
                         } else {
-                            _submissionMessage.value = "Error en el envío de la solicitud"
-                            Log.e(
-                                "ReportViewModel",
-                                "Error en la respuesta del servidor: ${response.code()}"
-                            )
-                        }
+                            _submissionMessage.value = "Error en el envío de la solicitud"                        }
                     }
                 } catch (e: Exception) {
                     withContext(Dispatchers.Main) {
                         _submissionMessage.value = "Error en la red: ${e.localizedMessage}"
                     }
-                    Log.e("ReportViewModel", "Excepción en la solicitud: ${e.localizedMessage}", e)
                 } finally {
                     _isLoading.value = false
-                    Log.d("ReportViewModel", "Solicitud finalizada")
                 }
             }
-        } else {
-            Log.d("ReportViewModel", "Validación fallida, no se envió la solicitud")
         }
     }
 
