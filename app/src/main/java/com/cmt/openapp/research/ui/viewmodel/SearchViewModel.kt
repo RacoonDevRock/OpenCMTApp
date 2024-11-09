@@ -35,27 +35,66 @@ class SearchViewModel @Inject constructor(private val repository: SearchReposito
     private val _sectores = MutableStateFlow<List<SectorDTO>>(emptyList())
     val sectores: StateFlow<List<SectorDTO>> = _sectores
 
+    private var currentPage = 0
+    private var isEndReached = false
+    private val pageSize = 10
+
     init {
         searchIncidents()
     }
 
     fun searchIncidents() {
+        // Reiniciar la paginación si se inicia una nueva búsqueda
+        currentPage = 0
+        isEndReached = false
+        _uiState.value = _uiState.value.copy(incidents = emptyList())  // Limpiar la lista
+        loadNextPage()  // Cargar la primera página
+    }
+
+    fun refreshIncidents() {
+        // Refrescar incidentes reiniciando el estado
+        currentPage = 0
+        isEndReached = false
+        _uiState.value = _uiState.value.copy(incidents = emptyList(), isLoading = true)
+        loadNextPage()
+    }
+
+    fun loadNextPage() {
+        // Verificar si se alcanzó el final de las páginas
+        if (isEndReached) return
+
         viewModelScope.launch(Dispatchers.IO) {
             _uiState.value = _uiState.value.copy(isLoading = true)
             runCatching {
-                repository.searchIncidents(date, zone, sect, accidentType)
+                repository.searchIncidents(date, zone, sect, accidentType, currentPage, pageSize) // Modificar el repositorio para soportar la paginación
             }.onSuccess { response ->
                 if (response.isSuccessful) {
-                    _uiState.value = IncidentUIState(response.body() ?: emptyList())
+                    val newIncidents = response.body() ?: emptyList()
+                    _uiState.value = _uiState.value.copy(
+                        incidents = _uiState.value.incidents + newIncidents, // Agregar incidentes
+                        isLoading = false
+                    )
+                    currentPage++
+
+                    // Verificar si ya no hay más páginas
+                    if (newIncidents.size < pageSize) {
+                        isEndReached = true
+                    }
                 } else {
-                    _uiState.value = _uiState.value.copy(errorMessage = "Error en la búsqueda")
+                    _uiState.value = _uiState.value.copy(
+                        errorMessage = "Error en la búsqueda",
+                        isLoading = false
+                    )
                 }
             }.onFailure {
-                _uiState.value = _uiState.value.copy(errorMessage = "Error de red")
+                _uiState.value = _uiState.value.copy(
+                    errorMessage = "Error de red",
+                    isLoading = false
+                )
             }
-            _uiState.value = _uiState.value.copy(isLoading = false)
         }
     }
+
 
     fun obtenerSectoresPorZona(zona: String) {
         _sectores.value = emptyList() // Limpia la lista antes de cargar nuevos sectores

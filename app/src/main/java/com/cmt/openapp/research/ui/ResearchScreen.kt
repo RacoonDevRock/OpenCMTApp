@@ -16,6 +16,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CalendarMonth
@@ -40,6 +41,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -75,6 +77,7 @@ fun ResearchScreen(
     var isBottomSheetVisible by rememberSaveable { mutableStateOf(false) }
     var isTopDialogVisible by rememberSaveable { mutableStateOf(false) }
     val swipeRefreshState = rememberSwipeRefreshState(isRefreshing = uiState.isLoading)
+    val listState = rememberLazyListState()
 
     LaunchedEffect(Unit) {
         viewModel.searchIncidents()
@@ -111,7 +114,8 @@ fun ResearchScreen(
                         }
 
                         LazyColumn(
-                            Modifier
+                            state = listState,
+                            modifier = Modifier
                                 .fillMaxSize()
                                 .weight(1f),
                             horizontalAlignment = Alignment.CenterHorizontally
@@ -157,6 +161,18 @@ fun ResearchScreen(
                         myIconButton = Icons.Default.Search,
                         modifier = Modifier.align(Alignment.BottomCenter)
                     )
+                }
+
+                LaunchedEffect(listState) {
+                    snapshotFlow {
+                        listState.layoutInfo.visibleItemsInfo.lastOrNull()?.index
+                    }.collect { lastVisibleItem ->
+                        lastVisibleItem?.let {
+                            if (it == uiState.incidents.size - 1 && !uiState.isLoading) {
+                                viewModel.loadNextPage()
+                            }
+                        }
+                    }
                 }
             }
         }
@@ -283,7 +299,8 @@ fun SectorDropDown(
                             expanded = true
                             viewModel.obtenerSectoresPorZona(viewModel.zone!!)
                         } else {
-                            Toast.makeText(context, "Seleccione una zona", Toast.LENGTH_SHORT).show()
+                            Toast.makeText(context, "Seleccione una zona", Toast.LENGTH_SHORT)
+                                .show()
                         }
                     }
                 )

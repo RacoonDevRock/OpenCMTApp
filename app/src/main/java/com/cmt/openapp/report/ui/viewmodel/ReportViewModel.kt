@@ -1,5 +1,6 @@
 package com.cmt.openapp.report.ui.viewmodel
 
+import android.util.Patterns
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
@@ -38,8 +39,8 @@ class ReportViewModel @Inject constructor(private val repository: ReportReposito
     private val _motive = MutableLiveData<String>()
     val motive: LiveData<String> = _motive
 
-    private val _errors = MutableLiveData<Map<String, String?>>()
-    val errors: LiveData<Map<String, String?>> = _errors
+    private val _isFormValid = MutableStateFlow(false)
+    val isFormValid: StateFlow<Boolean> = _isFormValid
 
     private val _isLoading = MutableStateFlow(false)
     val isLoading: StateFlow<Boolean> = _isLoading
@@ -66,9 +67,11 @@ class ReportViewModel @Inject constructor(private val repository: ReportReposito
                     withContext(Dispatchers.Main) {
                         if (response.isSuccessful) {
                             _submissionMessage.value = "Solicitud enviada"
+                            _isLoading.value = false
                             onSuccess()
                         } else {
-                            _submissionMessage.value = "Error en el envío de la solicitud"                        }
+                            _submissionMessage.value = "Error en el envío de la solicitud"
+                        }
                     }
                 } catch (e: Exception) {
                     withContext(Dispatchers.Main) {
@@ -78,64 +81,68 @@ class ReportViewModel @Inject constructor(private val repository: ReportReposito
                     _isLoading.value = false
                 }
             }
+        } else {
+            _submissionMessage.value = "Completar todos los campos"
         }
     }
 
     fun updateName(name: String) {
         _name.value = name
+        checkFormValidity()
     }
 
     fun updateIdt(idt: String) {
         _idt.value = idt
+        checkFormValidity()
     }
 
     fun updateAddress(address: String) {
         _address.value = address
+        checkFormValidity()
     }
 
     fun updateCity(city: String) {
         _city.value = city
+        checkFormValidity()
     }
 
     fun updateEmail(email: String) {
         _email.value = email
+        checkFormValidity()
     }
 
     fun updatePhone(phone: String) {
         _phone.value = phone
+        checkFormValidity()
     }
 
     fun updateMotive(motive: String) {
         _motive.value = motive
+        checkFormValidity()
     }
 
     private fun validateFields(solicitudRequest: SolicitudRequest): Boolean {
-        val errorsMap = mutableMapOf<String, String?>()
+        val isIdtValid = solicitudRequest.identificador.matches(Regex("^(\\d{8}|[a-zA-Z0-9]{1,12}|\\d{11})$"))
+        val isEmailValid = Patterns.EMAIL_ADDRESS.matcher(solicitudRequest.correoElectronico).matches()
+        val isPhoneValid = solicitudRequest.telefono.matches(Regex("^(9\\d{8}|\\d{7,8})$"))
 
-        errorsMap["nombreCompleto"] = if (solicitudRequest.nombreCompleto.isBlank()) {
-            "Nombre completo es requerido"
-        } else null
+        return isIdtValid &&
+                isEmailValid &&
+                isPhoneValid &&
+                solicitudRequest.nombreCompleto.isNotBlank() &&
+                solicitudRequest.domicilio.isNotBlank() &&
+                solicitudRequest.distrito.isNotBlank() &&
+                solicitudRequest.motivo.isNotBlank()
+    }
 
-        errorsMap["identificador"] =
-            if (!solicitudRequest.identificador.matches(Regex("^(\\d{8}|[a-zA-Z0-9]{1,12}|\\d{11})$"))) {
-                "Identificador debe ser DNI (8 dígitos), CE (hasta 12 caracteres) o RUC (11 dígitos)"
-            } else null
-
-        errorsMap["correoElectronico"] =
-            if (!android.util.Patterns.EMAIL_ADDRESS.matcher(solicitudRequest.correoElectronico)
-                    .matches()
-            ) {
-                "Correo electrónico inválido"
-            } else null
-
-        errorsMap["telefono"] =
-            if (!solicitudRequest.telefono.matches(Regex("^(9\\d{8}|\\d{7,8})$"))) {
-                "Teléfono debe ser un número móvil de 9 dígitos o fijo de 7-8 dígitos"
-            } else null
-
-        _errors.value = errorsMap
-
-        return errorsMap.values.all { it == null }
+    private fun checkFormValidity() {
+        _isFormValid.value = _name.value.orEmpty().isNotBlank() &&
+                _idt.value.orEmpty().isNotBlank() &&
+                _address.value.orEmpty().isNotBlank() &&
+                _city.value.orEmpty().isNotBlank() &&
+                _email.value.orEmpty().isNotBlank() &&
+                _phone.value.orEmpty().isNotBlank() &&
+                _motive.value.orEmpty().isNotBlank()
     }
 
     fun resetNavigation() {

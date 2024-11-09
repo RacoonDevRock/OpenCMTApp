@@ -7,7 +7,6 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
@@ -21,6 +20,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.livedata.observeAsState
@@ -61,10 +61,16 @@ fun ReportScreen(
     var isTopDialogVisible by rememberSaveable { mutableStateOf(false) }
     val isLoading by viewModel.isLoading.collectAsState(false)
     val submissionMessage by viewModel.submissionMessage.collectAsState()
+    val context = LocalContext.current
 
-    submissionMessage?.takeIf { it != "Solicitud enviada" && it.isNotBlank() }?.let { message ->
-        viewModel.resetNavigation()
-        Toast.makeText(LocalContext.current, message, Toast.LENGTH_SHORT).show()
+    LaunchedEffect(submissionMessage) {
+        submissionMessage?.let { message ->
+            Toast.makeText(context, message, Toast.LENGTH_SHORT).show()
+            if (message == "Solicitud enviada") {
+                viewModel.resetNavigation()
+                navigationController.navigate(Routes.ResearchScreen.route)
+            }
+        }
     }
 
     Box(
@@ -92,11 +98,6 @@ fun ReportScreen(
                 TopDialogSheet(onDismissRequest = { isTopDialogVisible = false }) {
                     InfoContent()
                 }
-            }
-
-            submissionMessage?.takeIf { it != "Solicitud enviada" && it.isNotBlank() }?.let { message ->
-                viewModel.resetNavigation()
-                Toast.makeText(LocalContext.current, message, Toast.LENGTH_SHORT).show()
             }
         }
     }
@@ -175,44 +176,231 @@ fun RequestForm(
         horizontalAlignment = Alignment.CenterHorizontally,
         modifier = Modifier.verticalScroll(rememberScrollState())
     ) {
-        TextFieldRequest(
-            stringResource(id = R.string.name_field_report), name, onNameChange, KeyboardType.Text
-        )
-        TextFieldRequest(
-            stringResource(id = R.string.id_field_report), idt, onIdtChange, KeyboardType.Number
-        )
-        TextFieldRequest(
-            stringResource(id = R.string.address_field_report),
-            address,
-            onAddressChange,
-            KeyboardType.Text
-        )
-        TextFieldRequest(
-            stringResource(id = R.string.city_field_report),
-            city,
-            onCityChange,
-            KeyboardType.Text
-        )
-        TextFieldRequest(
-            stringResource(id = R.string.email_field_report),
-            email,
-            onEmailChange,
-            KeyboardType.Email
-        )
-        TextFieldRequest(
-            stringResource(id = R.string.phone_field_report),
-            phone,
-            onPhoneChange,
-            KeyboardType.Number
-        )
-        TextFieldRequest(
-            stringResource(id = R.string.motive_field_report),
-            motive,
-            onMotiveChange,
-            KeyboardType.Text
-        )
+        MyCustomField(stringResource(id = R.string.name_field_report), name, onNameChange)
+
+        IdtField(stringResource(id = R.string.id_field_report), idt, onIdtChange)
+
+        MyCustomField(stringResource(id = R.string.address_field_report), address, onAddressChange)
+
+        MyCustomField(stringResource(id = R.string.city_field_report), city, onCityChange)
+
+        EmailField(stringResource(id = R.string.email_field_report), email, onEmailChange)
+
+        PhoneField(stringResource(id = R.string.phone_field_report), phone, onPhoneChange)
+
+        MotiveField(stringResource(id = R.string.motive_field_report), motive, onMotiveChange)
+
         MyButton(onSubmit, stringResource(id = R.string.report_button), Icons.Default.FilePresent)
     }
+}
+
+@Composable
+fun MotiveField(placeholder: String, value: String, onValueChange: (String) -> Unit) {
+    TextField(
+        value = value,
+        onValueChange = onValueChange,
+        modifier = Modifier
+            .width(300.dp)
+            .padding(8.dp),
+        placeholder = {
+            Text(
+                text = placeholder,
+                fontWeight = FontWeight.ExtraBold,
+                modifier = Modifier.padding(start = 4.dp),
+                fontSize = 14.sp,
+                color = MaterialTheme.colorScheme.tertiary
+            )
+        },
+        maxLines = 1,
+        singleLine = true,
+        textStyle = TextStyle(
+            fontSize = 14.sp,
+            lineHeight = 15.sp,
+            color = Color.Black
+        ),
+        colors = TextFieldDefaults.colors(
+            focusedContainerColor = Color.White,
+            unfocusedContainerColor = Color.White,
+            unfocusedTextColor = MaterialTheme.colorScheme.tertiary,
+            unfocusedTrailingIconColor = MaterialTheme.colorScheme.tertiary,
+            focusedTextColor = MaterialTheme.colorScheme.primary,
+            focusedTrailingIconColor = MaterialTheme.colorScheme.primary,
+            focusedIndicatorColor = Color.Transparent,
+            unfocusedIndicatorColor = Color.Transparent,
+        ),
+        keyboardOptions = KeyboardOptions(
+            autoCorrectEnabled = true,
+            keyboardType = KeyboardType.Text
+        ),
+        shape = RoundedCornerShape(25.dp)
+    )
+}
+
+@Composable
+fun PhoneField(placeholder: String, value: String, onValueChange: (String) -> Unit) {
+    TextField(
+        value = value,
+        onValueChange = onValueChange,
+        modifier = Modifier
+            .width(300.dp)
+            .padding(8.dp),
+        placeholder = {
+            Text(
+                text = placeholder,
+                fontWeight = FontWeight.ExtraBold,
+                modifier = Modifier.padding(start = 4.dp),
+                fontSize = 14.sp,
+                color = MaterialTheme.colorScheme.tertiary
+            )
+        },
+        maxLines = 1,
+        singleLine = true,
+        textStyle = TextStyle(
+            fontSize = 14.sp,
+            lineHeight = 15.sp,
+            color = Color.Black
+        ),
+        colors = TextFieldDefaults.colors(
+            focusedContainerColor = Color.White,
+            unfocusedContainerColor = Color.White,
+            unfocusedTextColor = MaterialTheme.colorScheme.tertiary,
+            unfocusedTrailingIconColor = MaterialTheme.colorScheme.tertiary,
+            focusedTextColor = MaterialTheme.colorScheme.primary,
+            focusedTrailingIconColor = MaterialTheme.colorScheme.primary,
+            focusedIndicatorColor = Color.Transparent,
+            unfocusedIndicatorColor = Color.Transparent,
+        ),
+        keyboardOptions = KeyboardOptions(
+            keyboardType = KeyboardType.Number
+        ),
+        shape = RoundedCornerShape(25.dp)
+    )
+}
+
+@Composable
+fun EmailField(placeholder: String, value: String, onEmailChange: (String) -> Unit) {
+    TextField(
+        value = value,
+        onValueChange = onEmailChange,
+        modifier = Modifier
+            .width(300.dp)
+            .padding(8.dp),
+        placeholder = {
+            Text(
+                text = placeholder,
+                fontWeight = FontWeight.ExtraBold,
+                modifier = Modifier.padding(start = 4.dp),
+                fontSize = 14.sp,
+                color = MaterialTheme.colorScheme.tertiary
+            )
+        },
+        maxLines = 1,
+        singleLine = true,
+        textStyle = TextStyle(
+            fontSize = 14.sp,
+            lineHeight = 15.sp,
+            color = Color.Black
+        ),
+        colors = TextFieldDefaults.colors(
+            focusedContainerColor = Color.White,
+            unfocusedContainerColor = Color.White,
+            unfocusedTextColor = MaterialTheme.colorScheme.tertiary,
+            unfocusedTrailingIconColor = MaterialTheme.colorScheme.tertiary,
+            focusedTextColor = MaterialTheme.colorScheme.primary,
+            focusedTrailingIconColor = MaterialTheme.colorScheme.primary,
+            focusedIndicatorColor = Color.Transparent,
+            unfocusedIndicatorColor = Color.Transparent,
+        ),
+        shape = RoundedCornerShape(25.dp),
+        keyboardOptions = KeyboardOptions(
+            autoCorrectEnabled = true,
+            keyboardType = KeyboardType.Email
+        ),
+    )
+}
+
+@Composable
+fun MyCustomField(placeholder: String, value: String, onValueChange: (String) -> Unit) {
+    TextField(
+        value = value,
+        onValueChange = onValueChange,
+        modifier = Modifier
+            .width(300.dp)
+            .padding(8.dp),
+        placeholder = {
+            Text(
+                text = placeholder,
+                fontWeight = FontWeight.ExtraBold,
+                modifier = Modifier.padding(start = 4.dp),
+                fontSize = 14.sp,
+                color = MaterialTheme.colorScheme.tertiary
+            )
+        },
+        maxLines = 1,
+        singleLine = true,
+        textStyle = TextStyle(
+            fontSize = 14.sp,
+            lineHeight = 15.sp,
+            color = Color.Black
+        ),
+        colors = TextFieldDefaults.colors(
+            focusedContainerColor = Color.White,
+            unfocusedContainerColor = Color.White,
+            unfocusedTextColor = MaterialTheme.colorScheme.tertiary,
+            unfocusedTrailingIconColor = MaterialTheme.colorScheme.tertiary,
+            focusedTextColor = MaterialTheme.colorScheme.primary,
+            focusedTrailingIconColor = MaterialTheme.colorScheme.primary,
+            focusedIndicatorColor = Color.Transparent,
+            unfocusedIndicatorColor = Color.Transparent,
+        ),
+        keyboardOptions = KeyboardOptions(
+            capitalization = KeyboardCapitalization.Words,
+            autoCorrectEnabled = true,
+            keyboardType = KeyboardType.Text
+        ),
+        shape = RoundedCornerShape(25.dp)
+    )
+}
+
+@Composable
+fun IdtField(placeholder: String, value: String, onIdtChange: (String) -> Unit) {
+    TextField(
+        value = value,
+        onValueChange = onIdtChange,
+        modifier = Modifier
+            .width(300.dp)
+            .padding(8.dp),
+        placeholder = {
+            Text(
+                text = placeholder,
+                fontWeight = FontWeight.ExtraBold,
+                modifier = Modifier.padding(start = 4.dp),
+                fontSize = 14.sp,
+                color = MaterialTheme.colorScheme.tertiary
+            )
+        },
+        maxLines = 1,
+        singleLine = true,
+        textStyle = TextStyle(
+            fontSize = 14.sp,
+            lineHeight = 15.sp,
+            color = Color.Black
+        ),
+        colors = TextFieldDefaults.colors(
+            focusedContainerColor = Color.White,
+            unfocusedContainerColor = Color.White,
+            unfocusedTextColor = MaterialTheme.colorScheme.tertiary,
+            unfocusedTrailingIconColor = MaterialTheme.colorScheme.tertiary,
+            focusedTextColor = MaterialTheme.colorScheme.primary,
+            focusedTrailingIconColor = MaterialTheme.colorScheme.primary,
+            focusedIndicatorColor = Color.Transparent,
+            unfocusedIndicatorColor = Color.Transparent,
+        ),
+        keyboardOptions = KeyboardOptions(
+            keyboardType = KeyboardType.Number
+        ),
+        shape = RoundedCornerShape(25.dp)
+    )
 }
 
 @Composable
@@ -234,54 +422,5 @@ fun RequestHeader(modifier: Modifier, incidentId: Long) {
         fontWeight = FontWeight.Bold,
         modifier = Modifier
             .padding(bottom = 10.dp)
-    )
-}
-
-@Composable
-fun TextFieldRequest(
-    label: String,
-    value: String,
-    onValueChange: (String) -> Unit,
-    keyboardType: KeyboardType,
-) {
-    TextField(
-        value = value,
-        onValueChange = onValueChange,
-        placeholder = {
-            Text(
-                text = label,
-                fontWeight = FontWeight.ExtraBold,
-                fontSize = 14.sp,
-                lineHeight = 15.sp,
-                color = MaterialTheme.colorScheme.tertiary
-            )
-        },
-        textStyle = TextStyle(
-            fontSize = 14.sp,
-            lineHeight = 15.sp,
-            color = Color.Black
-        ),
-        modifier = Modifier
-            .padding(bottom = 10.dp)
-            .width(300.dp)
-            .height(50.dp),
-        colors = TextFieldDefaults.colors(
-            focusedContainerColor = Color.White,
-            unfocusedContainerColor = Color.White,
-            unfocusedTextColor = MaterialTheme.colorScheme.tertiary,
-            unfocusedTrailingIconColor = MaterialTheme.colorScheme.tertiary,
-            focusedTextColor = MaterialTheme.colorScheme.primary,
-            focusedTrailingIconColor = MaterialTheme.colorScheme.primary,
-            focusedIndicatorColor = Color.Transparent,
-            unfocusedIndicatorColor = Color.Transparent,
-        ),
-        keyboardOptions = KeyboardOptions(
-            capitalization = KeyboardCapitalization.Words,
-            autoCorrectEnabled = true,
-            keyboardType = keyboardType
-        ),
-        shape = RoundedCornerShape(24.dp),
-        maxLines = 1,
-        singleLine = true
     )
 }
