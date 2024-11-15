@@ -19,7 +19,11 @@ class DetailViewModel @Inject constructor(private val repository: DetailReposito
     private val _incidentDetail = MutableStateFlow<IncidentDTODetail?>(null)
     val incidentDetail: StateFlow<IncidentDTODetail?> = _incidentDetail
 
+    private val _isLoading = MutableStateFlow(true)
+    val isLoading: StateFlow<Boolean> = _isLoading
+
     fun loadIncidentDetail(id: Long) {
+        _isLoading.value = true
         viewModelScope.launch(Dispatchers.IO) {
             runCatching {
                 repository.getIncidentDetail(id)
@@ -36,6 +40,7 @@ class DetailViewModel @Inject constructor(private val repository: DetailReposito
                     Log.d("DetailViewModel", "Network error: ${it.localizedMessage}")
                 }
             }
+            _isLoading.value = false
         }
     }
 }

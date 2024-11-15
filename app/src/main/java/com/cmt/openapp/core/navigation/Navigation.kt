@@ -18,12 +18,13 @@ fun AppNavGraph(
     modifier: Modifier,
     navController: NavHostController,
     startDestination: String = Routes.HomeScreen.route,
+    onThemeChange: (Int) -> Unit
 ) {
     NavHost(navController = navController, startDestination = startDestination) {
         addHomeRoute(modifier, navController)
-        addResearchRoute(modifier, navController)
-        addDetailIncidentRoute(modifier, navController)
-        addReportRoute(modifier, navController)
+        addResearchRoute(modifier, navController, onThemeChange)
+        addDetailIncidentRoute(modifier, navController, onThemeChange)
+        addReportRoute(modifier, navController, onThemeChange)
     }
 }
 
@@ -33,28 +34,28 @@ fun NavGraphBuilder.addHomeRoute(modifier: Modifier, navController: NavHostContr
     }
 }
 
-fun NavGraphBuilder.addResearchRoute(modifier: Modifier, navController: NavHostController) {
+fun NavGraphBuilder.addResearchRoute(modifier: Modifier, navController: NavHostController, onThemeChange: (Int) -> Unit) {
     composable(Routes.ResearchScreen.route) {
-        ResearchScreen(modifier = modifier, navigationController = navController)
+        ResearchScreen(modifier = modifier, navigationController = navController, onThemeChange = onThemeChange)
     }
 }
 
-fun NavGraphBuilder.addDetailIncidentRoute(modifier: Modifier, navController: NavHostController) {
+fun NavGraphBuilder.addDetailIncidentRoute(modifier: Modifier, navController: NavHostController, onThemeChange: (Int) -> Unit) {
     composable(
         route = "${Routes.DetailIncidentScreen.route}/{incidentId}",
         arguments = listOf(navArgument("incidentId") { type = NavType.StringType })
     ) { backStackEntry ->
         val incidentId = backStackEntry.arguments?.getString("incidentId") ?: ""
-        DetailIncidentScreen(modifier = modifier, navigationController = navController, incidentId = incidentId)
+        DetailIncidentScreen(modifier = modifier, navigationController = navController, incidentId = incidentId, onThemeChange = onThemeChange)
     }
 }
 
-fun NavGraphBuilder.addReportRoute(modifier: Modifier, navController: NavHostController) {
+fun NavGraphBuilder.addReportRoute(modifier: Modifier, navController: NavHostController, onThemeChange: (Int) -> Unit) {
     composable(
         route = "${Routes.ReportScreen.route}/{incidentId}",
         arguments = listOf(navArgument("incidentId") { type = NavType.LongType })
     ) { backStackEntry ->
         val incidentId = backStackEntry.arguments?.getLong("incidentId") ?: 0L
-        ReportScreen(modifier = modifier, navigationController = navController, incidentId = incidentId)
+        ReportScreen(modifier = modifier, navigationController = navController, incidentId = incidentId, onThemeChange = onThemeChange)
     }
 }

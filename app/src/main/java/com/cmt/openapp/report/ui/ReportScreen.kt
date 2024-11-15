@@ -1,6 +1,7 @@
 package com.cmt.openapp.report.ui
 
 import android.widget.Toast
+import androidx.appcompat.app.AppCompatDelegate
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -40,15 +41,18 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.constraintlayout.compose.ConstraintLayout
+import androidx.constraintlayout.compose.Dimension
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavHostController
 import com.cmt.openapp.R
 import com.cmt.openapp.core.navigation.Routes
+import com.cmt.openapp.core.ui.FAB
+import com.cmt.openapp.core.ui.HeaderSection
 import com.cmt.openapp.core.ui.shared.buttonNavigate.MyButton
 import com.cmt.openapp.core.ui.shared.dialog.InfoContent
 import com.cmt.openapp.core.ui.shared.dialog.TopDialogSheet
 import com.cmt.openapp.core.ui.shared.loading.LoadingScreen
-import com.cmt.openapp.detail.ui.HeaderDetailAndReport
 import com.cmt.openapp.report.ui.viewmodel.ReportViewModel
 
 @Composable
@@ -57,6 +61,7 @@ fun ReportScreen(
     navigationController: NavHostController,
     viewModel: ReportViewModel = hiltViewModel(),
     incidentId: Long,
+    onThemeChange: (Int) -> Unit,
 ) {
     var isTopDialogVisible by rememberSaveable { mutableStateOf(false) }
     val isLoading by viewModel.isLoading.collectAsState(false)
@@ -73,18 +78,32 @@ fun ReportScreen(
         }
     }
 
-    Box(
+    ConstraintLayout(
         modifier = modifier
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.background)
     ) {
-        if (isLoading) {
-            LoadingScreen()
-        } else {
-            Column(
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                HeaderDetailAndReport(navigationController)
+        val (header, form) = createRefs()
+
+        HeaderSection(
+            modifier = Modifier.constrainAs(header) { top.linkTo(parent.top) },
+            isInfo = false,
+            onInfoClick = {}, { navigationController })
+
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .constrainAs(form) {
+                    top.linkTo(header.bottom)
+                    start.linkTo(parent.start)
+                    end.linkTo(parent.end)
+                    bottom.linkTo(parent.bottom)
+                    height = Dimension.fillToConstraints
+                },
+        ) {
+            if (isLoading) {
+                LoadingScreen()
+            } else {
 
                 BoxRequest(
                     Modifier.fillMaxSize(),
@@ -92,14 +111,18 @@ fun ReportScreen(
                     viewModel = viewModel,
                     incidentId = incidentId
                 )
-            }
 
-            if (isTopDialogVisible) {
-                TopDialogSheet(onDismissRequest = { isTopDialogVisible = false }) {
-                    InfoContent()
+                if (isTopDialogVisible) {
+                    TopDialogSheet(onDismissRequest = { isTopDialogVisible = false }) {
+                        InfoContent()
+                    }
                 }
             }
         }
+
+        FAB(
+            isDarkTheme = AppCompatDelegate.getDefaultNightMode() == AppCompatDelegate.MODE_NIGHT_YES,
+            onThemeChange = onThemeChange) { }
     }
 }
 
@@ -122,7 +145,7 @@ fun BoxRequest(
 
     Box(
         modifier = modifier
-            .fillMaxWidth()
+            .fillMaxSize()
             .clip(RoundedCornerShape(topStart = 110.dp, topEnd = 110.dp))
             .background(MaterialTheme.colorScheme.primaryContainer)
     ) {
@@ -174,7 +197,8 @@ fun RequestForm(
 
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
-        modifier = Modifier.verticalScroll(rememberScrollState())
+        modifier = Modifier.verticalScroll(rememberScrollState()),
+        verticalArrangement = Arrangement.spacedBy(8.dp)
     ) {
         MyCustomField(stringResource(id = R.string.name_field_report), name, onNameChange)
 
@@ -199,34 +223,30 @@ fun MotiveField(placeholder: String, value: String, onValueChange: (String) -> U
     TextField(
         value = value,
         onValueChange = onValueChange,
-        modifier = Modifier
-            .width(300.dp)
-            .padding(8.dp),
+        modifier = Modifier.width(310.dp),
         placeholder = {
             Text(
                 text = placeholder,
                 fontWeight = FontWeight.ExtraBold,
-                modifier = Modifier.padding(start = 4.dp),
                 fontSize = 14.sp,
-                color = MaterialTheme.colorScheme.tertiary
+                color = MaterialTheme.colorScheme.onTertiary
             )
         },
-        maxLines = 1,
-        singleLine = true,
         textStyle = TextStyle(
+            fontWeight = FontWeight.ExtraBold,
             fontSize = 14.sp,
-            lineHeight = 15.sp,
-            color = Color.Black
+            lineHeight = 15.sp
         ),
         colors = TextFieldDefaults.colors(
             focusedContainerColor = Color.White,
             unfocusedContainerColor = Color.White,
-            unfocusedTextColor = MaterialTheme.colorScheme.tertiary,
-            unfocusedTrailingIconColor = MaterialTheme.colorScheme.tertiary,
-            focusedTextColor = MaterialTheme.colorScheme.primary,
-            focusedTrailingIconColor = MaterialTheme.colorScheme.primary,
+            unfocusedTextColor = MaterialTheme.colorScheme.onTertiary,
+            unfocusedTrailingIconColor = MaterialTheme.colorScheme.onTertiary,
+            focusedTextColor = MaterialTheme.colorScheme.onTertiaryContainer,
+            focusedTrailingIconColor = MaterialTheme.colorScheme.onTertiaryContainer,
             focusedIndicatorColor = Color.Transparent,
             unfocusedIndicatorColor = Color.Transparent,
+            cursorColor = MaterialTheme.colorScheme.onTertiaryContainer,
         ),
         keyboardOptions = KeyboardOptions(
             autoCorrectEnabled = true,
@@ -241,34 +261,32 @@ fun PhoneField(placeholder: String, value: String, onValueChange: (String) -> Un
     TextField(
         value = value,
         onValueChange = onValueChange,
-        modifier = Modifier
-            .width(300.dp)
-            .padding(8.dp),
+        modifier = Modifier.width(310.dp),
         placeholder = {
             Text(
                 text = placeholder,
                 fontWeight = FontWeight.ExtraBold,
-                modifier = Modifier.padding(start = 4.dp),
                 fontSize = 14.sp,
-                color = MaterialTheme.colorScheme.tertiary
+                color = MaterialTheme.colorScheme.onTertiary
             )
         },
         maxLines = 1,
         singleLine = true,
         textStyle = TextStyle(
+            fontWeight = FontWeight.ExtraBold,
             fontSize = 14.sp,
-            lineHeight = 15.sp,
-            color = Color.Black
+            lineHeight = 15.sp
         ),
         colors = TextFieldDefaults.colors(
             focusedContainerColor = Color.White,
             unfocusedContainerColor = Color.White,
-            unfocusedTextColor = MaterialTheme.colorScheme.tertiary,
-            unfocusedTrailingIconColor = MaterialTheme.colorScheme.tertiary,
-            focusedTextColor = MaterialTheme.colorScheme.primary,
-            focusedTrailingIconColor = MaterialTheme.colorScheme.primary,
+            unfocusedTextColor = MaterialTheme.colorScheme.onTertiary,
+            unfocusedTrailingIconColor = MaterialTheme.colorScheme.onTertiary,
+            focusedTextColor = MaterialTheme.colorScheme.onTertiaryContainer,
+            focusedTrailingIconColor = MaterialTheme.colorScheme.onTertiaryContainer,
             focusedIndicatorColor = Color.Transparent,
             unfocusedIndicatorColor = Color.Transparent,
+            cursorColor = MaterialTheme.colorScheme.onTertiaryContainer,
         ),
         keyboardOptions = KeyboardOptions(
             keyboardType = KeyboardType.Number
@@ -282,34 +300,32 @@ fun EmailField(placeholder: String, value: String, onEmailChange: (String) -> Un
     TextField(
         value = value,
         onValueChange = onEmailChange,
-        modifier = Modifier
-            .width(300.dp)
-            .padding(8.dp),
+        modifier = Modifier.width(310.dp),
         placeholder = {
             Text(
                 text = placeholder,
                 fontWeight = FontWeight.ExtraBold,
-                modifier = Modifier.padding(start = 4.dp),
                 fontSize = 14.sp,
-                color = MaterialTheme.colorScheme.tertiary
+                color = MaterialTheme.colorScheme.onTertiary
             )
         },
         maxLines = 1,
         singleLine = true,
         textStyle = TextStyle(
+            fontWeight = FontWeight.ExtraBold,
             fontSize = 14.sp,
-            lineHeight = 15.sp,
-            color = Color.Black
+            lineHeight = 15.sp
         ),
         colors = TextFieldDefaults.colors(
             focusedContainerColor = Color.White,
             unfocusedContainerColor = Color.White,
-            unfocusedTextColor = MaterialTheme.colorScheme.tertiary,
-            unfocusedTrailingIconColor = MaterialTheme.colorScheme.tertiary,
-            focusedTextColor = MaterialTheme.colorScheme.primary,
-            focusedTrailingIconColor = MaterialTheme.colorScheme.primary,
+            unfocusedTextColor = MaterialTheme.colorScheme.onTertiary,
+            unfocusedTrailingIconColor = MaterialTheme.colorScheme.onTertiary,
+            focusedTextColor = MaterialTheme.colorScheme.onTertiaryContainer,
+            focusedTrailingIconColor = MaterialTheme.colorScheme.onTertiaryContainer,
             focusedIndicatorColor = Color.Transparent,
             unfocusedIndicatorColor = Color.Transparent,
+            cursorColor = MaterialTheme.colorScheme.onTertiaryContainer,
         ),
         shape = RoundedCornerShape(25.dp),
         keyboardOptions = KeyboardOptions(
@@ -324,34 +340,32 @@ fun MyCustomField(placeholder: String, value: String, onValueChange: (String) ->
     TextField(
         value = value,
         onValueChange = onValueChange,
-        modifier = Modifier
-            .width(300.dp)
-            .padding(8.dp),
+        modifier = Modifier.width(310.dp),
         placeholder = {
             Text(
                 text = placeholder,
                 fontWeight = FontWeight.ExtraBold,
-                modifier = Modifier.padding(start = 4.dp),
                 fontSize = 14.sp,
-                color = MaterialTheme.colorScheme.tertiary
+                color = MaterialTheme.colorScheme.onTertiary
             )
         },
         maxLines = 1,
         singleLine = true,
         textStyle = TextStyle(
+            fontWeight = FontWeight.ExtraBold,
             fontSize = 14.sp,
-            lineHeight = 15.sp,
-            color = Color.Black
+            lineHeight = 15.sp
         ),
         colors = TextFieldDefaults.colors(
             focusedContainerColor = Color.White,
             unfocusedContainerColor = Color.White,
-            unfocusedTextColor = MaterialTheme.colorScheme.tertiary,
-            unfocusedTrailingIconColor = MaterialTheme.colorScheme.tertiary,
-            focusedTextColor = MaterialTheme.colorScheme.primary,
-            focusedTrailingIconColor = MaterialTheme.colorScheme.primary,
+            unfocusedTextColor = MaterialTheme.colorScheme.onTertiary,
+            unfocusedTrailingIconColor = MaterialTheme.colorScheme.onTertiary,
+            focusedTextColor = MaterialTheme.colorScheme.onTertiaryContainer,
+            focusedTrailingIconColor = MaterialTheme.colorScheme.onTertiaryContainer,
             focusedIndicatorColor = Color.Transparent,
             unfocusedIndicatorColor = Color.Transparent,
+            cursorColor = MaterialTheme.colorScheme.onTertiaryContainer,
         ),
         keyboardOptions = KeyboardOptions(
             capitalization = KeyboardCapitalization.Words,
@@ -367,34 +381,32 @@ fun IdtField(placeholder: String, value: String, onIdtChange: (String) -> Unit) 
     TextField(
         value = value,
         onValueChange = onIdtChange,
-        modifier = Modifier
-            .width(300.dp)
-            .padding(8.dp),
+        modifier = Modifier.width(310.dp),
         placeholder = {
             Text(
                 text = placeholder,
                 fontWeight = FontWeight.ExtraBold,
-                modifier = Modifier.padding(start = 4.dp),
                 fontSize = 14.sp,
-                color = MaterialTheme.colorScheme.tertiary
+                color = MaterialTheme.colorScheme.onTertiary
             )
         },
         maxLines = 1,
         singleLine = true,
         textStyle = TextStyle(
+            fontWeight = FontWeight.ExtraBold,
             fontSize = 14.sp,
-            lineHeight = 15.sp,
-            color = Color.Black
+            lineHeight = 15.sp
         ),
         colors = TextFieldDefaults.colors(
             focusedContainerColor = Color.White,
             unfocusedContainerColor = Color.White,
-            unfocusedTextColor = MaterialTheme.colorScheme.tertiary,
-            unfocusedTrailingIconColor = MaterialTheme.colorScheme.tertiary,
-            focusedTextColor = MaterialTheme.colorScheme.primary,
-            focusedTrailingIconColor = MaterialTheme.colorScheme.primary,
+            unfocusedTextColor = MaterialTheme.colorScheme.onTertiary,
+            unfocusedTrailingIconColor = MaterialTheme.colorScheme.onTertiary,
+            focusedTextColor = MaterialTheme.colorScheme.onTertiaryContainer,
+            focusedTrailingIconColor = MaterialTheme.colorScheme.onTertiaryContainer,
             focusedIndicatorColor = Color.Transparent,
             unfocusedIndicatorColor = Color.Transparent,
+            cursorColor = MaterialTheme.colorScheme.onTertiaryContainer,
         ),
         keyboardOptions = KeyboardOptions(
             keyboardType = KeyboardType.Number
@@ -407,7 +419,7 @@ fun IdtField(placeholder: String, value: String, onIdtChange: (String) -> Unit) 
 fun RequestHeader(modifier: Modifier, incidentId: Long) {
     Text(
         text = stringResource(id = R.string.title_report),
-        color = Color.Black,
+        color = MaterialTheme.colorScheme.primary,
         textAlign = TextAlign.Center,
         fontSize = 17.sp,
         fontWeight = FontWeight.Bold,
@@ -417,7 +429,7 @@ fun RequestHeader(modifier: Modifier, incidentId: Long) {
 
     Text(
         text = "Incidente N°$incidentId",
-        color = Color.Black,
+        color = MaterialTheme.colorScheme.primary,
         fontSize = 14.sp,
         fontWeight = FontWeight.Bold,
         modifier = Modifier

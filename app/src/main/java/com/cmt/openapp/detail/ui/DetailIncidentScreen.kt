@@ -1,8 +1,7 @@
 package com.cmt.openapp.detail.ui
 
-import androidx.compose.foundation.Image
+import androidx.appcompat.app.AppCompatDelegate
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -14,10 +13,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowBackIosNew
 import androidx.compose.material.icons.filled.FilePresent
-import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -30,22 +26,23 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.constraintlayout.compose.ConstraintLayout
+import androidx.constraintlayout.compose.Dimension
 import androidx.hilt.navigation.compose.hiltViewModel
-import androidx.navigation.NavController
 import androidx.navigation.NavHostController
 import com.cmt.openapp.R
 import com.cmt.openapp.core.navigation.Routes
+import com.cmt.openapp.core.ui.FAB
+import com.cmt.openapp.core.ui.HeaderSection
 import com.cmt.openapp.core.ui.shared.buttonNavigate.MyButton
 import com.cmt.openapp.core.ui.shared.dialog.InfoContent
 import com.cmt.openapp.core.ui.shared.dialog.TopDialogSheet
+import com.cmt.openapp.core.ui.shared.loading.LoadingScreen
 import com.cmt.openapp.detail.data.network.response.IncidentDTODetail
 import com.cmt.openapp.detail.ui.viewmodel.DetailViewModel
 import kotlinx.coroutines.Dispatchers
@@ -57,8 +54,11 @@ fun DetailIncidentScreen(
     navigationController: NavHostController,
     incidentId: String,
     viewModel: DetailViewModel = hiltViewModel(),
+    onThemeChange: (Int) -> Unit,
 ) {
+    val isLoading by viewModel.isLoading.collectAsState()
     var isTopDialogVisible by rememberSaveable { mutableStateOf(false) }
+    val incidentDetail by viewModel.incidentDetail.collectAsState()
 
     LaunchedEffect(Unit) {
         withContext(Dispatchers.IO) {
@@ -66,37 +66,58 @@ fun DetailIncidentScreen(
         }
     }
 
-    val incidentDetail by viewModel.incidentDetail.collectAsState()
-
-    Box(
+    ConstraintLayout(
         modifier = modifier
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.background)
     ) {
+        val (header, detail, fold) = createRefs()
+
+        HeaderSection(
+            modifier = Modifier.constrainAs(header) { top.linkTo(parent.top) },
+            isInfo = false,
+            onInfoClick = {}, { navigationController })
+
         Column(
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            HeaderDetailAndReport(navigationController)
-
-            Spacer(modifier = Modifier.height(20.dp))
-
-
-            incidentDetail?.let {
-                Box(modifier = Modifier.weight(1f), contentAlignment = Alignment.Center) {
-                    IncidentDetailsContainer(it)
+            modifier = Modifier
+                .fillMaxSize()
+                .constrainAs(detail) {
+                    top.linkTo(header.bottom)
+                    bottom.linkTo(fold.top)
+                    height = Dimension.fillToConstraints
                 }
-            } ?: Box(modifier = Modifier.weight(1f), contentAlignment = Alignment.Center) {
-                CircularProgressIndicator()
-            }
+        ) {
 
+            if (isLoading) {
+                LoadingScreen()
+            } else {
+                incidentDetail?.let {
+                    IncidentDetailsContainer(
+                        it, Modifier.fillMaxSize()
+                    )
+                }
+            }
 
             Spacer(modifier = Modifier.height(20.dp))
-
-            RequestedBox(incidentId) { id ->
-                navigationController.navigate(Routes.ReportScreen.createRoute(id.toLong()))
-            }
 
         }
+
+        FAB(
+            isDarkTheme = AppCompatDelegate.getDefaultNightMode() == AppCompatDelegate.MODE_NIGHT_YES,
+            onThemeChange = onThemeChange
+        ) { }
+
+        RequestedBox(
+            incidentId, { id ->
+                navigationController.navigate(Routes.ReportScreen.createRoute(id.toLong()))
+            }, Modifier
+                .padding(top = 20.dp)
+                .constrainAs(fold) {
+                    bottom.linkTo(parent.bottom)
+                    start.linkTo(parent.start)
+                    end.linkTo(parent.end)
+                },
+        )
 
         if (isTopDialogVisible) {
             TopDialogSheet(onDismissRequest = { isTopDialogVisible = false }) {
@@ -107,47 +128,13 @@ fun DetailIncidentScreen(
 }
 
 @Composable
-fun HeaderDetailAndReport(navController: NavController) {
+fun IncidentDetailsContainer(incidentDetail: IncidentDTODetail, modifier: Modifier = Modifier) {
     Box(
-        modifier = Modifier
-            .fillMaxWidth()
-            .height(140.dp)
-    ) {
-        IconBack(navController, Modifier.align(Alignment.TopStart))
-        Image(
-            painter = painterResource(id = R.drawable.open_logo_small),
-            contentDescription = "Logo CMT",
-            Modifier
-                .height(100.dp)
-                .padding(top = 10.dp)
-                .align(Alignment.Center),
-            contentScale = ContentScale.Fit
-        )
-    }
-
-    Spacer(modifier = Modifier.height(15.dp))
-}
-
-@Composable
-fun IconBack(navController: NavController, modifier: Modifier) {
-    Icon(
-        imageVector = Icons.Default.ArrowBackIosNew,
-        contentDescription = "Retroceso",
         modifier = modifier
-            .padding(24.dp)
-            .clickable { navController.popBackStack() },
-        tint = MaterialTheme.colorScheme.tertiary
-    )
-}
-
-@Composable
-fun IncidentDetailsContainer(incidentDetail: IncidentDTODetail) {
-    Box(
-        modifier = Modifier
             .fillMaxWidth()
             .padding(horizontal = 25.dp)
             .clip(RoundedCornerShape(16.dp))
-            .background(MaterialTheme.colorScheme.secondaryContainer)
+            .background(MaterialTheme.colorScheme.surfaceContainer)
     ) {
         Column(
             Modifier
@@ -172,9 +159,13 @@ fun IncidentDetailsContainer(incidentDetail: IncidentDTODetail) {
 }
 
 @Composable
-fun RequestedBox(incidentId: String, navigateToReport: (String) -> Unit) {
+fun RequestedBox(
+    incidentId: String,
+    navigateToReport: (String) -> Unit,
+    modifier: Modifier = Modifier,
+) {
     Box(
-        modifier = Modifier
+        modifier = modifier
             .fillMaxWidth()
             .height(210.dp)
             .clip(RoundedCornerShape(topStart = 110.dp, topEnd = 110.dp))
@@ -187,7 +178,7 @@ fun RequestedBox(incidentId: String, navigateToReport: (String) -> Unit) {
         ) {
             Text(
                 text = stringResource(id = R.string.previous_info_report),
-                color = Color.Black,
+                color = MaterialTheme.colorScheme.primary,
                 textAlign = TextAlign.Center,
                 fontSize = 14.sp,
                 lineHeight = 15.sp,
@@ -239,14 +230,14 @@ fun IncidentHeader(incidentNumber: String, fecha: String, hora: String) {
             text = "Incidente N° $incidentNumber",
             fontWeight = FontWeight.Bold,
             fontSize = 14.sp,
-            color = Color.Black
+            color = MaterialTheme.colorScheme.primary
         )
         Spacer(modifier = Modifier.weight(1f))
         Text(
             text = "$fecha $hora",
             fontWeight = FontWeight.Bold,
             fontSize = 14.sp,
-            color = Color.Black
+            color = MaterialTheme.colorScheme.primary
         )
     }
 }
@@ -270,7 +261,7 @@ fun MySectionData(text: String) {
 fun MySection(text: String) {
     Text(
         text = text,
-        color = MaterialTheme.colorScheme.tertiary,
+        color = MaterialTheme.colorScheme.primary,
         fontSize = 12.sp,
         fontWeight = FontWeight.Bold,
         lineHeight = 12.sp,

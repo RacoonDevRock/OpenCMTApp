@@ -28,7 +28,7 @@ fun TopDialogSheet(onDismissRequest: () -> Unit, content: @Composable () -> Unit
         Box(
             modifier = Modifier
                 .width(300.dp)
-                .background(MaterialTheme.colorScheme.secondaryContainer, RoundedCornerShape(20.dp))
+                .background(MaterialTheme.colorScheme.surfaceContainer, RoundedCornerShape(20.dp))
                 .padding(20.dp)
         ) {
             content()
