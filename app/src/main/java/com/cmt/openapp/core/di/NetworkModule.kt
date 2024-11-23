@@ -26,7 +26,7 @@ object NetworkModule {
     @Provides
     @Singleton
     fun provideRetrofit(): Retrofit {
-        return Retrofit.Builder().baseUrl("http://<my_ip>:8081/")
+        return Retrofit.Builder().baseUrl("http://ec2-3-139-54-49.us-east-2.compute.amazonaws.com:8081/")
             .addConverterFactory(GsonConverterFactory.create())
             .client(client)
             .build()

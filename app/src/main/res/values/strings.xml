@@ -13,7 +13,7 @@
     <string name="footer_info_app">Su uso aplica para consulta de incidentes y solicitudes de informes para entrega de copia certificada o simple.</string>
 
     <!-- Filter String -->
-    <string name="message_filter">Mostrar Filtros</string>
+    <string name="message_filter">Filtros</string>
     <string name="title_filter">Filtros</string>
     <string name="date_field_filter">Fecha</string>
     <string name="zone_field_filter">Zona</string>
@@ -41,4 +41,11 @@
     <!-- No Internet -->
     <string name="message_no_internet">No tienes conexión a Internet.</string>
     <string name="button_no_internet">Reintentar</string>
+
+    <!-- Diagnostic Form -->
+    <string name="diagnostic_form_title">Formulario de Diagnóstico</string>
+    <string name="question_fatigue">¿Sufres de cansancio o fatiga visual?</string>
+    <string name="question_astigmatism">¿Sufre de astigmatismo o miopía?</string>
+    <string name="question_reading_difficulty">¿Ha tenido dificultad en leer este cuestionario?</string>
+    <string name="ready">Listo</string>
 </resources>

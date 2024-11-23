@@ -33,6 +33,7 @@ import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
+import androidx.compose.material3.Typography
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -48,10 +49,9 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.constraintlayout.compose.ConstraintLayout
 import androidx.constraintlayout.compose.Dimension
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -75,6 +75,7 @@ fun ResearchScreen(
     viewModel: SearchViewModel = hiltViewModel(),
     navigationController: NavController,
     onThemeChange: (Int) -> Unit,
+    onTypographyChange: (Typography) -> Unit,
 ) {
     val uiState by viewModel.uiState.collectAsState()
     var isBottomSheetVisible by rememberSaveable { mutableStateOf(false) }
@@ -84,6 +85,7 @@ fun ResearchScreen(
 
     LaunchedEffect(Unit) {
         viewModel.searchIncidents()
+        viewModel.obtenerTiposDeIncidente()
     }
 
     ConstraintLayout(modifier = modifier.fillMaxSize()) {
@@ -96,7 +98,7 @@ fun ResearchScreen(
                 if (!isBottomSheetVisible) {
                     isTopDialogVisible = true
                 }
-            }, {navigationController})
+            }, { navigationController })
 
         Column(
             modifier = Modifier
@@ -133,12 +135,26 @@ fun ResearchScreen(
                         }
                     }
 
+                    uiState.incidents.isEmpty() -> { // Mostrar mensaje cuando no hay datos
+                        Box(
+                            modifier = Modifier.fillMaxSize(),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text(
+                                text = "No se encontraron incidentes.",
+                                style = MaterialTheme.typography.bodyLarge,
+                                color = MaterialTheme.colorScheme.primary
+                            )
+                        }
+                    }
+
                     else -> {
 
                         LazyColumn(
                             state = listState,
                             modifier = Modifier.fillMaxSize(),
-                            horizontalAlignment = Alignment.CenterHorizontally
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            verticalArrangement = Arrangement.spacedBy(8.dp)
                         ) {
                             items(uiState.incidents) { incident ->
                                 IncidentBox(
@@ -179,7 +195,10 @@ fun ResearchScreen(
         FAB(
             isDarkTheme = AppCompatDelegate.getDefaultNightMode() == AppCompatDelegate.MODE_NIGHT_YES,
             onThemeChange = onThemeChange,
-            onMainFabClick = { isBottomSheetVisible = !isBottomSheetVisible })
+            onMainFabClick = { isBottomSheetVisible = !isBottomSheetVisible },
+            currentTypography = MaterialTheme.typography,
+            onTypographyChange = onTypographyChange
+        )
 
         if (isBottomSheetVisible) {
             BottomSheetWithContent(
@@ -235,7 +254,7 @@ fun BottomSheetContent(viewModel: SearchViewModel, onDismiss: () -> Unit) {
     ) {
         Text(
             text = stringResource(id = R.string.title_filter),
-            fontWeight = FontWeight.ExtraBold,
+            style = MaterialTheme.typography.titleLarge,
             modifier = Modifier.align(Alignment.CenterHorizontally),
             color = MaterialTheme.colorScheme.primary
         )
@@ -247,7 +266,7 @@ fun BottomSheetContent(viewModel: SearchViewModel, onDismiss: () -> Unit) {
 
         SectorDropDown(viewModel.sect, { viewModel.sect = it }, viewModel)
 
-        IncidentTypeDropDown(viewModel.accidentType) { viewModel.accidentType = it }
+        IncidentTypeDropDown(viewModel.accidentType, { viewModel.accidentType = it }, viewModel)
 
         MyButton(
             {
@@ -262,19 +281,17 @@ fun BottomSheetContent(viewModel: SearchViewModel, onDismiss: () -> Unit) {
 }
 
 @Composable
-fun IncidentTypeDropDown(selectedIncidentType: String?, onIncidentTypeSelected: (String?) -> Unit) {
+fun IncidentTypeDropDown(
+    selectedIncidentType: String?, onIncidentTypeSelected: (String?) -> Unit,
+    viewModel: SearchViewModel,
+) {
     var expanded by rememberSaveable { mutableStateOf(false) }
-    val incidentOptions = mapOf(
-        "Consumo de licor en la vía pública" to "CONSUMO DE LICOR EN VÍA PUBLICA",
-        "Personas en actitud sospechosa" to "PERSONAS EN ACTITUD SOSPECHOSA",
-        "Todos los incidentes" to null
-    )
+    val incidentOptions by viewModel.tiposDeIncidente.collectAsState()
 
     Box {
 
         MyTextField(
-            incidentOptions.entries.find { it.value == selectedIncidentType }?.key
-                ?: "Tipo de Incidente",
+            selectedIncidentType ?: "Tipo de Incidente",
             {},
             placeholder = stringResource(id = R.string.incident_type_field_filter),
             trailingIcon = {
@@ -293,12 +310,18 @@ fun IncidentTypeDropDown(selectedIncidentType: String?, onIncidentTypeSelected: 
                 .background(color = MaterialTheme.colorScheme.primary)
                 .align(Alignment.Center),
         ) {
-            incidentOptions.forEach { (displayText, value) ->
+            incidentOptions.forEach { tipoIncidente ->
                 DropdownMenuItem(onClick = {
-                    onIncidentTypeSelected(value)
+                    onIncidentTypeSelected(tipoIncidente.nombre)
                     expanded = false
                 },
-                    text = { Text(text = displayText, color = MaterialTheme.colorScheme.onTertiary) }
+                    text = {
+                        Text(
+                            text = tipoIncidente.nombre,
+                            color = MaterialTheme.colorScheme.onTertiary,
+                            style = MaterialTheme.typography.bodySmall,
+                        )
+                    }
                 )
             }
         }
@@ -354,7 +377,8 @@ fun SectorDropDown(
                     text = {
                         Text(
                             text = sector.titulo,
-                            color = MaterialTheme.colorScheme.onTertiary
+                            color = MaterialTheme.colorScheme.onTertiary,
+                            style = MaterialTheme.typography.bodySmall,
                         )
                     }
                 )
@@ -400,7 +424,13 @@ fun ZoneDropDown(selectedZone: String?, onZoneSelected: (String?) -> Unit) {
                     onZoneSelected(value)
                     expanded = false
                 },
-                    text = { Text(text = displayText, color = MaterialTheme.colorScheme.onTertiary) }
+                    text = {
+                        Text(
+                            text = displayText,
+                            color = MaterialTheme.colorScheme.onTertiary,
+                            style = MaterialTheme.typography.bodySmall,
+                        )
+                    }
                 )
             }
         }
@@ -470,8 +500,7 @@ fun IncidentBox(
     Box(
         modifier = Modifier
             .fillMaxWidth()
-            .height(85.dp)
-            .padding(start = 26.dp, end = 26.dp, bottom = 16.dp)
+            .padding(horizontal = 25.dp)
             .clip(RoundedCornerShape(16.dp))
             .background(MaterialTheme.colorScheme.surfaceContainer)
             .clickable { navigate() }
@@ -483,39 +512,44 @@ fun IncidentBox(
         ) {
             Row(
                 Modifier
-                    .fillMaxWidth()
+                    .fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
                     text = "Incidente N° $numberIncident",
                     fontWeight = FontWeight.ExtraBold,
-                    fontSize = 14.sp,
+                    style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.primary,
-                    lineHeight = 20.sp
-                )
-                Spacer(modifier = Modifier.weight(1f))
-                Text(
-                    text = rememberedDateIncident,
-                    fontWeight = FontWeight.ExtraBold,
-                    fontSize = 14.sp,
-                    color = MaterialTheme.colorScheme.primary,
-                    lineHeight = 20.sp
-                )
-                Text(
-                    text = rememberedHourIncident,
-                    fontWeight = FontWeight.ExtraBold,
-                    fontSize = 14.sp,
-                    color = MaterialTheme.colorScheme.primary,
-                    lineHeight = 20.sp,
-                    modifier = Modifier.padding(start = 3.dp)
-                )
+
+                    )
+
+                Row {
+                    Text(
+                        text = rememberedDateIncident,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.primary,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                    Spacer(modifier = Modifier.width(4.dp))
+                    Text(
+                        text = rememberedHourIncident,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.primary,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                }
             }
-            Spacer(modifier = Modifier.weight(1f))
+
+            Spacer(modifier = Modifier.height(4.dp))
+
             Text(
                 text = rememberedTypeIncident,
                 fontWeight = FontWeight.ExtraBold,
-                fontSize = 14.sp,
+                style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.primary,
-                lineHeight = 20.sp,
                 modifier = Modifier
                     .fillMaxWidth()
             )
@@ -538,16 +572,11 @@ fun MyTextField(
             Text(
                 text = placeholder,
                 fontWeight = FontWeight.ExtraBold,
-                fontSize = 14.sp,
-                lineHeight = 15.sp,
+                style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onTertiary
             )
         },
-        textStyle = TextStyle(
-            fontSize = 14.sp,
-            lineHeight = 15.sp,
-            color = Color.Black
-        ),
+        textStyle = MaterialTheme.typography.bodySmall,
         readOnly = true,
         modifier = modifier
             .padding(start = 30.dp, end = 30.dp, bottom = 13.dp)

@@ -17,18 +17,23 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
-import androidx.navigation.NavController
 import com.cmt.openapp.R
 
 
 @Composable
-fun HeaderSection(modifier: Modifier = Modifier, isInfo: Boolean, onInfoClick: () -> Unit, navController: () -> NavController) {
+fun HeaderSection(
+    modifier: Modifier = Modifier, isInfo: Boolean, onInfoClick: () -> Unit,
+    onBackClick: () -> Unit,
+) {
     Box(
         modifier = modifier
             .fillMaxWidth()
             .height(140.dp)
     ) {
-        if (isInfo) IconInfo(onInfoClick, Modifier.align(Alignment.TopStart)) else IconBack(navController(), Modifier.align(Alignment.TopStart))
+        if (isInfo) IconInfo(onInfoClick, Modifier.align(Alignment.TopStart)) else IconBack(
+            onBackClick,
+            Modifier.align(Alignment.TopStart)
+        )
 
         Image(
             painter = painterResource(id = R.drawable.open_logo_small),
@@ -54,13 +59,13 @@ fun IconInfo(onClick: () -> Unit, modifier: Modifier) {
 }
 
 @Composable
-fun IconBack(navController: NavController, modifier: Modifier) {
+fun IconBack(onBackClick: () -> Unit, modifier: Modifier) {
     Icon(
         imageVector = Icons.Default.ArrowBackIosNew,
         contentDescription = "Retroceso",
         modifier = modifier
             .padding(24.dp)
-            .clickable { navController.popBackStack() },
+            .clickable { onBackClick() },
         tint = MaterialTheme.colorScheme.tertiary
     )
 }

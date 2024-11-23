@@ -2,6 +2,7 @@ package com.cmt.openapp.research.data.network
 
 import com.cmt.openapp.research.data.network.response.IncidentResponse
 import com.cmt.openapp.research.data.network.response.SectorDTO
+import com.cmt.openapp.research.data.network.response.TipoIncidenteDTO
 import retrofit2.Response
 import retrofit2.http.GET
 import retrofit2.http.Query
@@ -22,4 +23,7 @@ interface SearchClient {
     suspend fun obtenerSectoresPorZona(
         @Query("zona") zona: String
     ): Response<List<SectorDTO>>
+
+    @GET("api/incidente/tipo-incidente")
+    suspend fun obtenerIncidentes(): Response<List<TipoIncidenteDTO>>
 }

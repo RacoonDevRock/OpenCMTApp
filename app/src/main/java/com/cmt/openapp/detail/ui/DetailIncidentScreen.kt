@@ -16,11 +16,13 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.FilePresent
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.material3.Typography
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -30,7 +32,6 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.constraintlayout.compose.ConstraintLayout
 import androidx.constraintlayout.compose.Dimension
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -46,6 +47,7 @@ import com.cmt.openapp.core.ui.shared.loading.LoadingScreen
 import com.cmt.openapp.detail.data.network.response.IncidentDTODetail
 import com.cmt.openapp.detail.ui.viewmodel.DetailViewModel
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
 @Composable
@@ -55,10 +57,12 @@ fun DetailIncidentScreen(
     incidentId: String,
     viewModel: DetailViewModel = hiltViewModel(),
     onThemeChange: (Int) -> Unit,
+    onTypographyChange: (Typography) -> Unit,
 ) {
     val isLoading by viewModel.isLoading.collectAsState()
     var isTopDialogVisible by rememberSaveable { mutableStateOf(false) }
     val incidentDetail by viewModel.incidentDetail.collectAsState()
+    val scope = rememberCoroutineScope()
 
     LaunchedEffect(Unit) {
         withContext(Dispatchers.IO) {
@@ -76,7 +80,12 @@ fun DetailIncidentScreen(
         HeaderSection(
             modifier = Modifier.constrainAs(header) { top.linkTo(parent.top) },
             isInfo = false,
-            onInfoClick = {}, { navigationController })
+            onInfoClick = {},
+            onBackClick = {
+                scope.launch {
+                    navigationController.popBackStack()
+                }
+            })
 
         Column(
             modifier = Modifier
@@ -85,7 +94,9 @@ fun DetailIncidentScreen(
                     top.linkTo(header.bottom)
                     bottom.linkTo(fold.top)
                     height = Dimension.fillToConstraints
-                }
+                },
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center
         ) {
 
             if (isLoading) {
@@ -93,7 +104,7 @@ fun DetailIncidentScreen(
             } else {
                 incidentDetail?.let {
                     IncidentDetailsContainer(
-                        it, Modifier.fillMaxSize()
+                        it, Modifier.fillMaxWidth()
                     )
                 }
             }
@@ -104,13 +115,17 @@ fun DetailIncidentScreen(
 
         FAB(
             isDarkTheme = AppCompatDelegate.getDefaultNightMode() == AppCompatDelegate.MODE_NIGHT_YES,
-            onThemeChange = onThemeChange
-        ) { }
+            onThemeChange = onThemeChange, { },
+            currentTypography = MaterialTheme.typography,
+            onTypographyChange = onTypographyChange
+        )
 
         RequestedBox(
-            incidentId, { id ->
+            incidentId,
+            { id ->
                 navigationController.navigate(Routes.ReportScreen.createRoute(id.toLong()))
-            }, Modifier
+            },
+            Modifier
                 .padding(top = 20.dp)
                 .constrainAs(fold) {
                     bottom.linkTo(parent.bottom)
@@ -139,14 +154,14 @@ fun IncidentDetailsContainer(incidentDetail: IncidentDTODetail, modifier: Modifi
         Column(
             Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 20.dp, vertical = 20.dp)
+                .padding(horizontal = 16.dp, vertical = 14.dp)
         ) {
             IncidentHeader(
                 incidentDetail.nroIncidente,
                 incidentDetail.fecha,
                 incidentDetail.horallamada
             )
-            Spacer(modifier = Modifier.height(15.dp))
+            Spacer(modifier = Modifier.height(10.dp))
             IncidentDetails(
                 incidentDetail.tipoIncidente,
                 incidentDetail.zona,
@@ -180,9 +195,7 @@ fun RequestedBox(
                 text = stringResource(id = R.string.previous_info_report),
                 color = MaterialTheme.colorScheme.primary,
                 textAlign = TextAlign.Center,
-                fontSize = 14.sp,
-                lineHeight = 15.sp,
-                fontWeight = FontWeight.Bold,
+                style = MaterialTheme.typography.titleSmall,
                 modifier = Modifier
                     .padding(horizontal = 50.dp)
                     .align(Alignment.CenterHorizontally)
@@ -228,15 +241,13 @@ fun IncidentHeader(incidentNumber: String, fecha: String, hora: String) {
     ) {
         Text(
             text = "Incidente N° $incidentNumber",
-            fontWeight = FontWeight.Bold,
-            fontSize = 14.sp,
+            style = MaterialTheme.typography.displaySmall,
             color = MaterialTheme.colorScheme.primary
         )
         Spacer(modifier = Modifier.weight(1f))
         Text(
             text = "$fecha $hora",
-            fontWeight = FontWeight.Bold,
-            fontSize = 14.sp,
+            style = MaterialTheme.typography.displaySmall,
             color = MaterialTheme.colorScheme.primary
         )
     }
@@ -246,13 +257,12 @@ fun IncidentHeader(incidentNumber: String, fecha: String, hora: String) {
 fun MySectionData(text: String) {
     Text(
         text = text,
-        fontSize = 14.sp,
-        fontWeight = FontWeight.ExtraBold,
+        style = MaterialTheme.typography.displaySmall,
         textAlign = TextAlign.Justify,
         color = MaterialTheme.colorScheme.primary,
-        lineHeight = 18.sp,
         modifier = Modifier
             .fillMaxWidth()
+            .padding(top = 1.dp)
             .padding(bottom = 5.dp)
     )
 }
@@ -262,9 +272,8 @@ fun MySection(text: String) {
     Text(
         text = text,
         color = MaterialTheme.colorScheme.primary,
-        fontSize = 12.sp,
+        style = MaterialTheme.typography.headlineSmall,
         fontWeight = FontWeight.Bold,
-        lineHeight = 12.sp,
         modifier = Modifier.fillMaxWidth()
     )
 }

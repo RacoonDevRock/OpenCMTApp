@@ -11,7 +11,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.unit.sp
 
 @Composable
 fun MyButton(
@@ -33,8 +32,16 @@ fun MyButton(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.Center
         ) {
-            Text(text = textButton, fontSize = 21.sp, color = MaterialTheme.colorScheme.secondary)
-            Icon(myIconButton, contentDescription = "navigate", tint = MaterialTheme.colorScheme.secondary)
+            Text(
+                text = textButton,
+                style = MaterialTheme.typography.labelLarge,
+                color = MaterialTheme.colorScheme.secondary
+            )
+            Icon(
+                myIconButton,
+                contentDescription = "navigate",
+                tint = MaterialTheme.colorScheme.secondary
+            )
         }
     }
 }

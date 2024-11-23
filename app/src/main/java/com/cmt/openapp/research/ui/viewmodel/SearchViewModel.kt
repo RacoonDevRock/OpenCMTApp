@@ -8,6 +8,7 @@ import androidx.lifecycle.viewModelScope
 import com.cmt.openapp.research.data.SearchRepository
 import com.cmt.openapp.research.data.network.response.IncidenteDTOResponse
 import com.cmt.openapp.research.data.network.response.SectorDTO
+import com.cmt.openapp.research.data.network.response.TipoIncidenteDTO
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -34,6 +35,9 @@ class SearchViewModel @Inject constructor(private val repository: SearchReposito
 
     private val _sectores = MutableStateFlow<List<SectorDTO>>(emptyList())
     val sectores: StateFlow<List<SectorDTO>> = _sectores
+
+    private val _tiposDeIncidente = MutableStateFlow<List<TipoIncidenteDTO>>(emptyList())
+    val tiposDeIncidente: StateFlow<List<TipoIncidenteDTO>> = _tiposDeIncidente
 
     private var currentPage = 0
     private var isEndReached = false
@@ -95,7 +99,6 @@ class SearchViewModel @Inject constructor(private val repository: SearchReposito
         }
     }
 
-
     fun obtenerSectoresPorZona(zona: String) {
         _sectores.value = emptyList() // Limpia la lista antes de cargar nuevos sectores
         viewModelScope.launch {
@@ -106,6 +109,18 @@ class SearchViewModel @Inject constructor(private val repository: SearchReposito
                 // Manejar el error según tu lógica de negocio
                 _uiState.value = _uiState.value.copy(errorMessage = "Error al cargar sectores")
             }
+        }
+    }
+
+    fun obtenerTiposDeIncidente() {
+        viewModelScope.launch {
+            val response = repository.obtenerTiposDeIncidente()
+            if (response.isSuccessful) {
+                _tiposDeIncidente.value = response.body() ?: emptyList()
+            } else {
+                _uiState.value = _uiState.value.copy(errorMessage = "Error al cargar tipos de incidente")
+            }
+            _uiState.value = _uiState.value.copy(isLoading = false) // Detén el indicador de carga
         }
     }
 }

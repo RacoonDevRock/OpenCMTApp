@@ -3,6 +3,7 @@ package com.cmt.openapp.research.data
 import com.cmt.openapp.research.data.network.SearchClient
 import com.cmt.openapp.research.data.network.response.IncidenteDTOResponse
 import com.cmt.openapp.research.data.network.response.SectorDTO
+import com.cmt.openapp.research.data.network.response.TipoIncidenteDTO
 import retrofit2.Response
 import javax.inject.Inject
 
@@ -27,5 +28,9 @@ class SearchRepository @Inject constructor(private val searchClient: SearchClien
 
     suspend fun obtenerSectoresPorZona(zona: String): Response<List<SectorDTO>> {
         return searchClient.obtenerSectoresPorZona(zona)
+    }
+
+    suspend fun obtenerTiposDeIncidente() : Response<List<TipoIncidenteDTO>> {
+        return searchClient.obtenerIncidentes()
     }
 }
