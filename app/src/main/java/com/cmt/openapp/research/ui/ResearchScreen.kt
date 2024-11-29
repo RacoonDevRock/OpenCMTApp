@@ -1,7 +1,6 @@
 package com.cmt.openapp.research.ui
 
 import android.app.DatePickerDialog
-import android.util.Log
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatDelegate
 import androidx.compose.foundation.background
@@ -20,6 +19,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CalendarMonth
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.KeyboardArrowUp
 import androidx.compose.material.icons.filled.Search
@@ -159,7 +159,13 @@ fun ResearchScreen(
                     }
                 }
 
-                else -> {}
+                is LoadState.NotLoading -> {
+                    if (incidentFlow.itemCount == 0) {
+                        item {
+                            NoResultsMessage() // Manejar el estado de lista vacía
+                        }
+                    }
+                }
             }
         }
 
@@ -425,8 +431,8 @@ fun ZoneDropDown(
     var expanded by rememberSaveable { mutableStateOf(false) }
     val zoneOptions = mapOf(
         "Todas las zonas" to null,
-        "El Alambre" to "ALAMBRE",
         "Ayacucho" to "AYACUCHO",
+        "El Alambre" to "ALAMBRE",
         "La Noria" to "NORIA"
     )
 
@@ -478,6 +484,9 @@ fun ZoneDropDown(
 fun DateDropDown(selectedDate: String?, onDateSelected: (String?) -> Unit) {
     val context = LocalContext.current
     val calendar = Calendar.getInstance()
+
+    var lastSelectedDate by remember { mutableStateOf(selectedDate) }
+
     val datePickerDialog = remember {
         DatePickerDialog(
             context,
@@ -487,9 +496,19 @@ fun DateDropDown(selectedDate: String?, onDateSelected: (String?) -> Unit) {
                 }"
                 onDateSelected(formattedDate)
             },
-            calendar.get(Calendar.YEAR),
-            calendar.get(Calendar.MONTH),
-            calendar.get(Calendar.DAY_OF_MONTH)
+            // Usar la última fecha seleccionada o la fecha actual como valores iniciales
+            lastSelectedDate?.let {
+                val parts = it.split("-")
+                parts[0].toInt()
+            } ?: calendar.get(Calendar.YEAR),
+            lastSelectedDate?.let {
+                val parts = it.split("-")
+                parts[1].toInt() - 1
+            } ?: calendar.get(Calendar.MONTH),
+            lastSelectedDate?.let {
+                val parts = it.split("-")
+                parts[2].toInt()
+            } ?: calendar.get(Calendar.DAY_OF_MONTH)
         ).apply {
             datePicker.minDate = Calendar.getInstance().apply {
                 set(Calendar.YEAR, 2020)
@@ -510,11 +529,22 @@ fun DateDropDown(selectedDate: String?, onDateSelected: (String?) -> Unit) {
         {},
         placeholder = stringResource(id = R.string.date_field_filter),
         trailingIcon = {
-            Icon(
-                imageVector = Icons.Default.CalendarMonth,
-                contentDescription = "",
-                Modifier.clickable { datePickerDialog.show() }
-            )
+            if (selectedDate != null) {
+                Icon(
+                    imageVector = Icons.Default.Delete,
+                    contentDescription = "Borrar fecha",
+                    Modifier.clickable {
+                        onDateSelected(null)
+                        lastSelectedDate = null
+                    }
+                )
+            } else {
+                Icon(
+                    imageVector = Icons.Default.CalendarMonth,
+                    contentDescription = "Seleccionar fecha",
+                    Modifier.clickable { datePickerDialog.show() }
+                )
+            }
         },
         Modifier.fillMaxWidth()
     )

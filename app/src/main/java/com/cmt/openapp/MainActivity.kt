@@ -35,9 +35,7 @@ class MainActivity : ComponentActivity() {
         val sharedPreferences = getSharedPreferences("app_prefs", MODE_PRIVATE)
 
         val isFirstLaunch = sharedPreferences.getBoolean("is_first_launch", true)
-
         val savedTypography = sharedPreferences.getString("text_size", "normal")
-
         val savedTheme =
             sharedPreferences.getInt("theme_mode", AppCompatDelegate.MODE_NIGHT_FOLLOW_SYSTEM)
         AppCompatDelegate.setDefaultNightMode(savedTheme)

@@ -1,5 +1,6 @@
 package com.cmt.openapp.report.ui
 
+import android.widget.Toast
 import androidx.activity.compose.BackHandler
 import androidx.appcompat.app.AppCompatDelegate
 import androidx.compose.foundation.background
@@ -18,8 +19,6 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.FilePresent
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.SnackbarHost
-import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
@@ -29,7 +28,6 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
@@ -39,6 +37,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.FocusDirection
 import androidx.compose.ui.focus.FocusManager
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.ImeAction
@@ -78,15 +77,15 @@ fun ReportScreen(
     val focusManager = LocalFocusManager.current
     var showExitDialog by rememberSaveable { mutableStateOf(false) }
     val scope = rememberCoroutineScope()
-    val snackbarHostState = remember { SnackbarHostState() }
+    val context = LocalContext.current
 
     BackHandler(enabled = true) {
         showExitDialog = true
     }
 
     LaunchedEffect(submissionMessage) {
-        submissionMessage?.let {
-            snackbarHostState.showSnackbar(it)
+        submissionMessage?.let { message ->
+            Toast.makeText(context, message, Toast.LENGTH_SHORT).show()
         }
     }
 
@@ -147,8 +146,6 @@ fun ReportScreen(
                 }
             }
         }
-
-        SnackbarHost(hostState = snackbarHostState)
 
         FAB(
             isDarkTheme = AppCompatDelegate.getDefaultNightMode() == AppCompatDelegate.MODE_NIGHT_YES,

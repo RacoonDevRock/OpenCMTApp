@@ -258,7 +258,7 @@ fun MySectionData(text: String) {
     Text(
         text = text,
         style = MaterialTheme.typography.displaySmall,
-        textAlign = TextAlign.Justify,
+        textAlign = TextAlign.Start,
         color = MaterialTheme.colorScheme.primary,
         modifier = Modifier
             .fillMaxWidth()

@@ -1,11 +1,8 @@
 package com.cmt.openapp.research.data
 
-import android.util.Log
 import androidx.paging.PagingSource
 import androidx.paging.PagingState
 import com.cmt.openapp.research.data.network.response.IncidenteDTOResponse
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
 
 class IncidentePagingSource(
     private val repository: SearchRepository,

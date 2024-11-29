@@ -45,6 +45,7 @@ class SearchViewModel @Inject constructor(
     fun obtenerIncidentesPaginated() = Pager(
         config = PagingConfig(
             pageSize = 10,
+            initialLoadSize = 10,
             enablePlaceholders = false
         ),
         pagingSourceFactory = {
