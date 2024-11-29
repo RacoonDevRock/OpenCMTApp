@@ -159,13 +159,7 @@ fun ResearchScreen(
                     }
                 }
 
-                is LoadState.NotLoading -> {
-                    if (incidentFlow.itemCount == 0) {
-                        item {
-                            NoResultsMessage() // Manejar el estado de lista vacía
-                        }
-                    }
-                }
+                else -> {}
             }
         }
 
