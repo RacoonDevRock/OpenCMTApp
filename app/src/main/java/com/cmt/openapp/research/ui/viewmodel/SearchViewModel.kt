@@ -1,32 +1,33 @@
 package com.cmt.openapp.research.ui.viewmodel
 
+import android.util.Log
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import androidx.paging.Pager
+import androidx.paging.PagingConfig
+import androidx.paging.cachedIn
+import com.cmt.openapp.research.data.IncidentePagingSource
 import com.cmt.openapp.research.data.SearchRepository
-import com.cmt.openapp.research.data.network.response.IncidenteDTOResponse
+import com.cmt.openapp.research.data.network.response.Filters
 import com.cmt.openapp.research.data.network.response.SectorDTO
 import com.cmt.openapp.research.data.network.response.TipoIncidenteDTO
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import javax.inject.Inject
 
-
-data class IncidentUIState(
-    val incidents: List<IncidenteDTOResponse> = emptyList(),
-    val isLoading: Boolean = false,
-    val errorMessage: String? = null,
-)
-
 @HiltViewModel
-class SearchViewModel @Inject constructor(private val repository: SearchRepository) : ViewModel() {
-    private val _uiState = MutableStateFlow(IncidentUIState())
-    val uiState: StateFlow<IncidentUIState> = _uiState
+class SearchViewModel @Inject constructor(
+    private val repository: SearchRepository,
+) : ViewModel() {
 
     var date by mutableStateOf<String?>(null)
     var zone by mutableStateOf<String?>(null)
@@ -36,91 +37,79 @@ class SearchViewModel @Inject constructor(private val repository: SearchReposito
     private val _sectores = MutableStateFlow<List<SectorDTO>>(emptyList())
     val sectores: StateFlow<List<SectorDTO>> = _sectores
 
+    private val filters = MutableStateFlow(Filters())
+
     private val _tiposDeIncidente = MutableStateFlow<List<TipoIncidenteDTO>>(emptyList())
     val tiposDeIncidente: StateFlow<List<TipoIncidenteDTO>> = _tiposDeIncidente
 
-    private var currentPage = 0
-    private var isEndReached = false
-    private val pageSize = 10
+    fun obtenerIncidentesPaginated() = Pager(
+        config = PagingConfig(
+            pageSize = 10,
+            enablePlaceholders = false
+        ),
+        pagingSourceFactory = {
+            IncidentePagingSource(
+                repository = repository,
+                fecha = date,
+                zona = zone,
+                sector = sect,
+                tipoIncidente = accidentType
+            )
+        }
+    ).flow.cachedIn(viewModelScope)
 
-    init {
-        searchIncidents()
-    }
-
-    fun searchIncidents() {
-        // Reiniciar la paginación si se inicia una nueva búsqueda
-        currentPage = 0
-        isEndReached = false
-        _uiState.value = _uiState.value.copy(incidents = emptyList())  // Limpiar la lista
-        loadNextPage()  // Cargar la primera página
-    }
-
-    fun refreshIncidents() {
-        // Refrescar incidentes reiniciando el estado
-        currentPage = 0
-        isEndReached = false
-        _uiState.value = _uiState.value.copy(incidents = emptyList(), isLoading = true)
-        loadNextPage()
-    }
-
-    fun loadNextPage() {
-        // Verificar si se alcanzó el final de las páginas
-        if (isEndReached) return
-
-        viewModelScope.launch(Dispatchers.IO) {
-            _uiState.value = _uiState.value.copy(isLoading = true)
-            runCatching {
-                repository.searchIncidents(date, zone, sect, accidentType, currentPage, pageSize) // Modificar el repositorio para soportar la paginación
-            }.onSuccess { response ->
-                if (response.isSuccessful) {
-                    val newIncidents = response.body() ?: emptyList()
-                    _uiState.value = _uiState.value.copy(
-                        incidents = _uiState.value.incidents + newIncidents, // Agregar incidentes
-                        isLoading = false
-                    )
-                    currentPage++
-
-                    // Verificar si ya no hay más páginas
-                    if (newIncidents.size < pageSize) {
-                        isEndReached = true
-                    }
-                } else {
-                    _uiState.value = _uiState.value.copy(
-                        errorMessage = "Error en la búsqueda",
-                        isLoading = false
-                    )
-                }
-            }.onFailure {
-                _uiState.value = _uiState.value.copy(
-                    errorMessage = "Error de red",
-                    isLoading = false
+    @OptIn(ExperimentalCoroutinesApi::class)
+    val incidentsFlow = filters.flatMapLatest { filter ->
+        Pager(
+            config = PagingConfig(
+                pageSize = 10,
+                enablePlaceholders = false
+            ),
+            pagingSourceFactory = {
+                IncidentePagingSource(
+                    repository = repository,
+                    fecha = filter.date,
+                    zona = filter.zone,
+                    sector = filter.sect,
+                    tipoIncidente = filter.accidentType
                 )
             }
-        }
+        ).flow
+    }.cachedIn(viewModelScope)
+
+    fun updateFilters(date: String?, zone: String?, sect: String?, accidentType: String?) {
+        filters.value = Filters(date, zone, sect, accidentType)
     }
 
     fun obtenerSectoresPorZona(zona: String) {
-        _sectores.value = emptyList() // Limpia la lista antes de cargar nuevos sectores
-        viewModelScope.launch {
+        viewModelScope.launch(Dispatchers.IO) {
+            Log.d("SearchViewModel", "Obteniendo sectores para zona: $zona")
             val response = repository.obtenerSectoresPorZona(zona)
             if (response.isSuccessful) {
-                _sectores.value = response.body() ?: emptyList()
-            } else {
-                // Manejar el error según tu lógica de negocio
-                _uiState.value = _uiState.value.copy(errorMessage = "Error al cargar sectores")
+                withContext(Dispatchers.Main) {
+                    _sectores.value = response.body() ?: emptyList()
+                    Log.d("SearchViewModel", "Sectores obtenidos: ${_sectores.value}")
+                }
             }
         }
     }
 
     fun obtenerTiposDeIncidente() {
-        viewModelScope.launch {
+        viewModelScope.launch(Dispatchers.IO) {
             val response = repository.obtenerTiposDeIncidente()
             if (response.isSuccessful) {
-                _tiposDeIncidente.value = response.body() ?: emptyList()
+                withContext(Dispatchers.Main) {
+                    _tiposDeIncidente.value = response.body() ?: emptyList()
+                    Log.d("SearchViewModel", "Tipos de incidente obtenidos: ${_tiposDeIncidente.value}")
+                }
             } else {
-                _uiState.value = _uiState.value.copy(errorMessage = "Error al cargar tipos de incidente")
+                Log.e("SearchViewModel", "Error al obtener tipos de incidente: ${response.code()}")
             }
-            _uiState.value = _uiState.value.copy(isLoading = false) // Detén el indicador de carga
         }
+    }
+
+    fun updateSector(sector: String?) {
+        sect = sector
+        if (zone == null) _sectores.value = emptyList()
     }
 }

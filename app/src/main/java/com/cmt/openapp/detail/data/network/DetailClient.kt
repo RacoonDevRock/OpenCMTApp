@@ -8,5 +8,5 @@ import retrofit2.http.Path
 interface DetailClient {
 
     @GET("api/incidente/{id}")
-    suspend fun getIncidentDetail(@Path("id") id: Long): Response<IncidentDTODetail>
+    suspend fun getIncidentDetail(@Path("id") id: Int): Response<IncidentDTODetail>
 }

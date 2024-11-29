@@ -6,7 +6,7 @@ import retrofit2.Response
 import javax.inject.Inject
 
 class ReportRepository @Inject constructor(private val reportClient: ReportClient) {
-    suspend fun solicitarIncidente(id: Long, solicitudRequest: SolicitudRequest): Response<Unit> {
+    suspend fun solicitarIncidente(id: Int, solicitudRequest: SolicitudRequest): Response<Unit> {
         return reportClient.solicitarIncidente(id, solicitudRequest)
     }
 }

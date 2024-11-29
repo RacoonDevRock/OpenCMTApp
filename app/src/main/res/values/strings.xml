@@ -1,6 +1,6 @@
 <resources>
     <!-- Name App -->
-    <string name="app_name">OpenApp</string>
+    <string name="app_name">OpenCMT</string>
 
     <!-- Home String -->
     <string name="home_description">Conoce sobre los incidentes y solicita informes detallados</string>
@@ -48,4 +48,7 @@
     <string name="question_astigmatism">¿Sufre de astigmatismo o miopía?</string>
     <string name="question_reading_difficulty">¿Ha tenido dificultad en leer este cuestionario?</string>
     <string name="ready">Listo</string>
+
+    <!-- Errors -->
+    <string name="error_message">No se encontraron incidentes con los filtros seleccionados</string>
 </resources>

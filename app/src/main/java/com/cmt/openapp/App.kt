@@ -13,8 +13,7 @@ class App : Application() {
         // solo para develop
         StrictMode.setThreadPolicy(
             StrictMode.ThreadPolicy.Builder()
-                .detectAll()
-                .penaltyLog()
+                .permitAll()
                 .build()
         )
         StrictMode.setVmPolicy(

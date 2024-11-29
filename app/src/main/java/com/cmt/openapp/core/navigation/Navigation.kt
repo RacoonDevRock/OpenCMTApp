@@ -93,9 +93,9 @@ fun NavGraphBuilder.addReportRoute(
 ) {
     composable(
         route = "${Routes.ReportScreen.route}/{incidentId}",
-        arguments = listOf(navArgument("incidentId") { type = NavType.LongType })
+        arguments = listOf(navArgument("incidentId") { type = NavType.IntType })
     ) { backStackEntry ->
-        val incidentId = backStackEntry.arguments?.getLong("incidentId") ?: 0L
+        val incidentId = backStackEntry.arguments?.getInt("incidentId") ?: 0
         ReportScreen(
             modifier = modifier,
             navigationController = navController,

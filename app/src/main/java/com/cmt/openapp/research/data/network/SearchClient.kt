@@ -15,7 +15,7 @@ interface SearchClient {
         @Query("zona") zona: String? = null,
         @Query("sector") sector: String? = null,
         @Query("tipoIncidente") tipoIncidente: String? = null,
-        @Query("page") page: Int = 0,
+        @Query("page") page: Int,
         @Query("size") size: Int = 10
     ): Response<IncidentResponse>
 

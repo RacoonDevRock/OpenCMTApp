@@ -5,12 +5,17 @@ import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import androidx.navigation.NavHostController
+import com.cmt.openapp.core.navigation.Routes
 import com.cmt.openapp.report.data.ReportRepository
+import com.cmt.openapp.report.data.network.response.FormData
+import com.cmt.openapp.report.data.network.response.FormValidationResult
 import com.cmt.openapp.report.data.network.response.SolicitudRequest
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import javax.inject.Inject
@@ -18,29 +23,8 @@ import javax.inject.Inject
 @HiltViewModel
 class ReportViewModel @Inject constructor(private val repository: ReportRepository) : ViewModel() {
 
-    private val _name = MutableLiveData<String>()
-    val name: LiveData<String> = _name
-
-    private val _idt = MutableLiveData<String>()
-    val idt: LiveData<String> = _idt
-
-    private val _address = MutableLiveData<String>()
-    val address: LiveData<String> = _address
-
-    private val _city = MutableLiveData<String>()
-    val city: LiveData<String> = _city
-
-    private val _email = MutableLiveData<String>()
-    val email: LiveData<String> = _email
-
-    private val _phone = MutableLiveData<String>()
-    val phone: LiveData<String> = _phone
-
-    private val _motive = MutableLiveData<String>()
-    val motive: LiveData<String> = _motive
-
-    private val _isFormValid = MutableStateFlow(false)
-    val isFormValid: StateFlow<Boolean> = _isFormValid
+    private val _formData = MutableStateFlow(FormData())
+    val formData: StateFlow<FormData> = _formData
 
     private val _isLoading = MutableStateFlow(false)
     val isLoading: StateFlow<Boolean> = _isLoading
@@ -48,101 +32,90 @@ class ReportViewModel @Inject constructor(private val repository: ReportReposito
     private val _submissionMessage = MutableStateFlow<String?>(null)
     val submissionMessage: StateFlow<String?> = _submissionMessage
 
-    fun solicitarAccesoIncidente(id: Long, onSuccess: () -> Unit) {
-        val solicitudRequest = SolicitudRequest(
-            nombreCompleto = name.value.orEmpty(),
-            identificador = idt.value.orEmpty(),
-            domicilio = address.value.orEmpty(),
-            distrito = city.value.orEmpty(),
-            correoElectronico = email.value.orEmpty(),
-            telefono = phone.value.orEmpty(),
-            motivo = motive.value.orEmpty()
-        )
+    private val _validationErrors = MutableStateFlow<Map<String, String>>(emptyMap())
+    val validationErrors: StateFlow<Map<String, String>> = _validationErrors
 
-        if (validateFields(solicitudRequest)) {
+    fun handleSubmissionResult(navigationController: NavHostController) {
+        viewModelScope.launch {
+            submissionMessage.collectLatest { message ->
+                message?.let {
+                    if (it == "Solicitud enviada") {
+                        withContext(Dispatchers.Main) {
+                            navigationController.navigate(Routes.ResearchScreen.route) {
+                                popUpTo(Routes.ReportScreen.route) { inclusive = true }
+                            }
+                        }
+                    }
+                    resetNavigation()
+                }
+            }
+        }
+    }
+
+    fun updateFormData(update: (FormData) -> FormData) {
+        val currentData = _formData.value ?: FormData()
+        _formData.value = update(currentData)
+    }
+
+    fun solicitarAccesoIncidente(id: Int, onSuccess: () -> Unit) {
+        val formData = _formData.value
+        val validationResult = validateFields(formData)
+        if (!validationResult.isValid) {
+            _validationErrors.value = validationResult.errors
+            return
+        }
+
+            val solicitudRequest = SolicitudRequest(
+                nombreCompleto = formData.name,
+                identificador = formData.idt,
+                domicilio = formData.address,
+                distrito = formData.city,
+                correoElectronico = formData.email,
+                telefono = formData.phone,
+                motivo = formData.motive
+            )
+
             viewModelScope.launch(Dispatchers.IO) {
                 _isLoading.value = true
                 try {
                     val response = repository.solicitarIncidente(id, solicitudRequest)
-                    withContext(Dispatchers.Main) {
-                        if (response.isSuccessful) {
-                            _submissionMessage.value = "Solicitud enviada"
-                            _isLoading.value = false
+                    if (response.isSuccessful) {
+                        withContext(Dispatchers.Main) {
                             onSuccess()
-                        } else {
-                            _submissionMessage.value = "Error en el envío de la solicitud"
                         }
+                        _submissionMessage.value = "Solicitud enviada"
+                    } else {
+                        _submissionMessage.value = "Error en el envío de la solicitud"
                     }
                 } catch (e: Exception) {
-                    withContext(Dispatchers.Main) {
-                        _submissionMessage.value = "Error en la red: ${e.localizedMessage}"
-                    }
+                    _submissionMessage.value = "Error en la red: ${e.localizedMessage}"
                 } finally {
                     _isLoading.value = false
                 }
             }
-        } else {
-            _submissionMessage.value = "Completar todos los campos"
+    }
+
+    private fun validateFields(formData: FormData): FormValidationResult {
+        val errors = mutableMapOf<String, String>()
+
+        if (formData.name.isBlank()) errors["name"] = "El nombre está vacío."
+        if (!formData.idt.matches(Regex("^(\\d{8}|[a-zA-Z0-9]{1,12}|\\d{11})$"))) {
+            errors["idt"] = "Formato de identificador inválido."
         }
-    }
+        if (formData.address.isBlank()) errors["address"] = "La dirección está vacía."
+        if (formData.city.isBlank()) errors["city"] = "La ciudad está vacía."
+        if (!Patterns.EMAIL_ADDRESS.matcher(formData.email).matches()) {
+            errors["email"] = "Formato de correo inválido."
+        }
+        if (!formData.phone.matches(Regex("^(9\\d{8}|\\d{7,8})$"))) {
+            errors["phone"] = "Formato de teléfono inválido."
+        }
+        if (formData.motive.isBlank()) errors["motive"] = "El motivo está vacío."
 
-    fun updateName(name: String) {
-        _name.value = name
-        checkFormValidity()
-    }
+        // Actualiza el flujo de errores de validación
+        _validationErrors.value = errors
 
-    fun updateIdt(idt: String) {
-        _idt.value = idt
-        checkFormValidity()
-    }
-
-    fun updateAddress(address: String) {
-        _address.value = address
-        checkFormValidity()
-    }
-
-    fun updateCity(city: String) {
-        _city.value = city
-        checkFormValidity()
-    }
-
-    fun updateEmail(email: String) {
-        _email.value = email
-        checkFormValidity()
-    }
-
-    fun updatePhone(phone: String) {
-        _phone.value = phone
-        checkFormValidity()
-    }
-
-    fun updateMotive(motive: String) {
-        _motive.value = motive
-        checkFormValidity()
-    }
-
-    private fun validateFields(solicitudRequest: SolicitudRequest): Boolean {
-        val isIdtValid = solicitudRequest.identificador.matches(Regex("^(\\d{8}|[a-zA-Z0-9]{1,12}|\\d{11})$"))
-        val isEmailValid = Patterns.EMAIL_ADDRESS.matcher(solicitudRequest.correoElectronico).matches()
-        val isPhoneValid = solicitudRequest.telefono.matches(Regex("^(9\\d{8}|\\d{7,8})$"))
-
-        return isIdtValid &&
-                isEmailValid &&
-                isPhoneValid &&
-                solicitudRequest.nombreCompleto.isNotBlank() &&
-                solicitudRequest.domicilio.isNotBlank() &&
-                solicitudRequest.distrito.isNotBlank() &&
-                solicitudRequest.motivo.isNotBlank()
-    }
-
-    private fun checkFormValidity() {
-        _isFormValid.value = _name.value.orEmpty().isNotBlank() &&
-                _idt.value.orEmpty().isNotBlank() &&
-                _address.value.orEmpty().isNotBlank() &&
-                _city.value.orEmpty().isNotBlank() &&
-                _email.value.orEmpty().isNotBlank() &&
-                _phone.value.orEmpty().isNotBlank() &&
-                _motive.value.orEmpty().isNotBlank()
+        return FormValidationResult(errors.isEmpty(), errors)
     }
 
     fun resetNavigation() {

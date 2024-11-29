@@ -78,11 +78,13 @@ dependencies {
     // Hilt para la inyección de dependencias
     implementation(libs.hilt.android)
     implementation(libs.androidx.appcompat)
+    implementation(libs.androidx.paging.common.android)
     kapt(libs.hilt.compiler)
     implementation(libs.androidx.hilt.navigation.compose)
 
-    // https://mvnrepository.com/artifact/com.google.accompanist/accompanist-swiperefresh
-    implementation(libs.accompanist.swiperefresh)
+    // Paging
+    implementation(libs.androidx.paging.runtime.ktx)
+    implementation(libs.androidx.paging.compose)
 
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)

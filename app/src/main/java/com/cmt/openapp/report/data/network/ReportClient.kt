@@ -10,7 +10,7 @@ interface ReportClient {
 
     @POST("api/incidente/{id}/solicitar")
     suspend fun solicitarIncidente(
-        @Path("id") id: Long,
+        @Path("id") id: Int,
         @Body solicitudRequest: SolicitudRequest,
     ): Response<Unit>
 }

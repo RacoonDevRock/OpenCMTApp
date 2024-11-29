@@ -1,6 +1,7 @@
 package com.cmt.openapp.research.ui
 
 import android.app.DatePickerDialog
+import android.util.Log
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatDelegate
 import androidx.compose.foundation.background
@@ -16,8 +17,6 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CalendarMonth
@@ -42,7 +41,6 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
-import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -50,12 +48,15 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.constraintlayout.compose.ConstraintLayout
 import androidx.constraintlayout.compose.Dimension
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
+import androidx.paging.LoadState
+import androidx.paging.compose.collectAsLazyPagingItems
 import com.cmt.openapp.R
 import com.cmt.openapp.core.navigation.Routes
 import com.cmt.openapp.core.ui.FAB
@@ -65,8 +66,6 @@ import com.cmt.openapp.core.ui.shared.dialog.InfoContent
 import com.cmt.openapp.core.ui.shared.dialog.TopDialogSheet
 import com.cmt.openapp.core.ui.shared.loading.LoadingScreen
 import com.cmt.openapp.research.ui.viewmodel.SearchViewModel
-import com.google.accompanist.swiperefresh.SwipeRefresh
-import com.google.accompanist.swiperefresh.rememberSwipeRefreshState
 import java.util.Calendar
 
 @Composable
@@ -77,15 +76,13 @@ fun ResearchScreen(
     onThemeChange: (Int) -> Unit,
     onTypographyChange: (Typography) -> Unit,
 ) {
-    val uiState by viewModel.uiState.collectAsState()
-    var isBottomSheetVisible by rememberSaveable { mutableStateOf(false) }
+    var isBottomSheetVisible by remember { mutableStateOf(false) }
     var isTopDialogVisible by rememberSaveable { mutableStateOf(false) }
-    val swipeRefreshState = rememberSwipeRefreshState(isRefreshing = uiState.isLoading)
-    val listState = rememberLazyListState()
+
+    val incidentFlow = viewModel.incidentsFlow.collectAsLazyPagingItems()
 
     LaunchedEffect(Unit) {
-        viewModel.searchIncidents()
-        viewModel.obtenerTiposDeIncidente()
+        viewModel.obtenerIncidentesPaginated()
     }
 
     ConstraintLayout(modifier = modifier.fillMaxSize()) {
@@ -98,99 +95,73 @@ fun ResearchScreen(
                 if (!isBottomSheetVisible) {
                     isTopDialogVisible = true
                 }
-            }, { navigationController })
+            },
+            onBackClick = { })
 
-        Column(
+
+        LazyColumn(
             modifier = Modifier
-                .fillMaxWidth()
+                .fillMaxSize()
                 .constrainAs(list) {
                     top.linkTo(header.bottom)
                     bottom.linkTo(button.top)
                     height = Dimension.fillToConstraints
-                },
-            verticalArrangement = Arrangement.Center
+                }
+                .padding(bottom = 10.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
         ) {
-
-            SwipeRefresh(
-                state = swipeRefreshState,
-                onRefresh = { viewModel.searchIncidents() }) {
-
-                when {
-                    uiState.isLoading && !swipeRefreshState.isRefreshing -> {
-                        LoadingScreen()
+            when {
+                incidentFlow.loadState.refresh is LoadState.NotLoading && incidentFlow.itemCount == 0 -> {
+                    item {
+                        NoResultsMessage()
                     }
+                }
 
-                    uiState.errorMessage != null -> {
-                        uiState.errorMessage?.let { errorMessage ->
-                            Box(
-                                modifier = Modifier.fillMaxSize(),
-                                contentAlignment = Alignment.Center
-                            ) {
-                                Text(
-                                    text = errorMessage,
-                                    color = Color.Red,
-                                    modifier = Modifier.align(Alignment.Center)
-                                )
-                            }
-                        }
-                    }
-
-                    uiState.incidents.isEmpty() -> { // Mostrar mensaje cuando no hay datos
-                        Box(
-                            modifier = Modifier.fillMaxSize(),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Text(
-                                text = "No se encontraron incidentes.",
-                                style = MaterialTheme.typography.bodyLarge,
-                                color = MaterialTheme.colorScheme.primary
+                else -> {
+                    items(incidentFlow.itemCount) { index ->
+                        val incident = incidentFlow[index]
+                        if (incident != null) {
+                            IncidentBox(
+                                navigate = {
+                                    navigationController.navigate(
+                                        Routes.DetailIncidentScreen.createRoute(incident.nroIncidente)
+                                    )
+                                },
+                                numberIncident = incident.nroIncidente,
+                                dateIncident = incident.fecha,
+                                hourIncident = incident.hora,
+                                typeIncident = incident.tipoIncidente
                             )
                         }
                     }
-
-                    else -> {
-
-                        LazyColumn(
-                            state = listState,
-                            modifier = Modifier.fillMaxSize(),
-                            horizontalAlignment = Alignment.CenterHorizontally,
-                            verticalArrangement = Arrangement.spacedBy(8.dp)
-                        ) {
-                            items(uiState.incidents) { incident ->
-                                IncidentBox(
-                                    {
-                                        navigationController.navigate(
-                                            Routes.DetailIncidentScreen.createRoute(
-                                                incident.nroIncidente
-                                            )
-                                        )
-                                    },
-                                    incident.nroIncidente,
-                                    incident.fecha,
-                                    incident.hora,
-                                    incident.tipoIncidente
-                                )
-                            }
-                        }
-
-                        LaunchedEffect(listState) {
-                            snapshotFlow {
-                                listState.layoutInfo.visibleItemsInfo.lastOrNull()?.index
-                            }.collect { lastVisibleItem ->
-                                lastVisibleItem?.let {
-                                    if (it == uiState.incidents.size - 1 && !uiState.isLoading) {
-                                        viewModel.loadNextPage()
-                                    }
-                                }
-                            }
-                        }
-
-                    }
                 }
             }
-        }
 
-        Spacer(modifier = Modifier.height(80.dp))
+            when (incidentFlow.loadState.append) {
+                is LoadState.Loading -> {
+                    item {
+                        LoadingScreen()
+                    }
+                }
+
+                is LoadState.Error -> {
+                    item {
+                        val error = (incidentFlow.loadState.append as LoadState.Error).error
+                        Text(
+                            text = "Error al cargar más elementos: ${error.localizedMessage ?: "Desconocido"}",
+                            color = MaterialTheme.colorScheme.error,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(16.dp),
+                            textAlign = TextAlign.Center
+                        )
+                    }
+                }
+
+                else -> {}
+            }
+        }
 
         FAB(
             isDarkTheme = AppCompatDelegate.getDefaultNightMode() == AppCompatDelegate.MODE_NIGHT_YES,
@@ -217,7 +188,7 @@ fun ResearchScreen(
                 }
             },
             textButton = stringResource(id = R.string.message_filter),
-            myIconButton = Icons.Default.Search,
+            myIconButton = Icons.Default.KeyboardArrowUp,
             modifier = Modifier
                 .padding(bottom = 10.dp)
                 .constrainAs(button) {
@@ -225,6 +196,24 @@ fun ResearchScreen(
                     start.linkTo(parent.start)
                     end.linkTo(parent.end)
                 }
+        )
+    }
+}
+
+@Composable
+fun NoResultsMessage() {
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(16.dp),
+        contentAlignment = Alignment.Center
+    ) {
+        Text(
+            text = stringResource(id = R.string.error_message),
+            style = MaterialTheme.typography.titleSmall,
+            color = MaterialTheme.colorScheme.primary,
+            textAlign = TextAlign.Center,
+            modifier = Modifier.align(Alignment.Center)
         )
     }
 }
@@ -252,6 +241,7 @@ fun BottomSheetContent(viewModel: SearchViewModel, onDismiss: () -> Unit) {
             .padding(16.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
+
         Text(
             text = stringResource(id = R.string.title_filter),
             style = MaterialTheme.typography.titleLarge,
@@ -262,27 +252,33 @@ fun BottomSheetContent(viewModel: SearchViewModel, onDismiss: () -> Unit) {
 
         DateDropDown(viewModel.date) { viewModel.date = it }
 
-        ZoneDropDown(viewModel.zone) { viewModel.zone = it }
+        ZoneDropDown(viewModel.zone, { viewModel.zone = it }, viewModel)
 
         SectorDropDown(viewModel.sect, { viewModel.sect = it }, viewModel)
 
         IncidentTypeDropDown(viewModel.accidentType, { viewModel.accidentType = it }, viewModel)
 
+        // boton que se presiona para aplicar busqueda por filtros
         MyButton(
             {
-                viewModel.searchIncidents()
+                viewModel.updateFilters(
+                    date = viewModel.date,
+                    zone = viewModel.zone,
+                    sect = viewModel.sect,
+                    accidentType = viewModel.accidentType
+                )
                 onDismiss()
             },
             stringResource(id = R.string.filter_button),
             Icons.Default.Search
         )
     }
-    Spacer(modifier = Modifier.width(56.dp))
 }
 
 @Composable
 fun IncidentTypeDropDown(
-    selectedIncidentType: String?, onIncidentTypeSelected: (String?) -> Unit,
+    selectedIncidentType: String?,
+    onIncidentTypeSelected: (String?) -> Unit,
     viewModel: SearchViewModel,
 ) {
     var expanded by rememberSaveable { mutableStateOf(false) }
@@ -291,14 +287,17 @@ fun IncidentTypeDropDown(
     Box {
 
         MyTextField(
-            selectedIncidentType ?: "Tipo de Incidente",
+            selectedIncidentType ?: "Todos los incidentes",
             {},
             placeholder = stringResource(id = R.string.incident_type_field_filter),
             trailingIcon = {
                 Icon(
                     imageVector = if (expanded) Icons.Default.KeyboardArrowUp else Icons.Default.KeyboardArrowDown,
                     contentDescription = "",
-                    modifier = Modifier.clickable { expanded = true }
+                    modifier = Modifier.clickable {
+                        expanded = true
+                        viewModel.obtenerTiposDeIncidente()
+                    }
                 )
             },
             Modifier.fillMaxWidth()
@@ -310,6 +309,19 @@ fun IncidentTypeDropDown(
                 .background(color = MaterialTheme.colorScheme.primary)
                 .align(Alignment.Center),
         ) {
+            DropdownMenuItem(
+                onClick = {
+                    onIncidentTypeSelected(null)
+                    expanded = false
+                },
+                text = {
+                    Text(
+                        text = "Todos los incidentes",
+                        color = MaterialTheme.colorScheme.onTertiary,
+                        style = MaterialTheme.typography.bodySmall,
+                    )
+                }
+            )
             incidentOptions.forEach { tipoIncidente ->
                 DropdownMenuItem(onClick = {
                     onIncidentTypeSelected(tipoIncidente.nombre)
@@ -342,7 +354,7 @@ fun SectorDropDown(
     Box {
 
         MyTextField(
-            sectores.find { it.titulo == selectedSector }?.titulo ?: "Todos los sectores",
+            selectedSector ?: "Selecciona un sector",
             {},
             placeholder = stringResource(id = R.string.sector_field_filter),
             trailingIcon = {
@@ -369,11 +381,28 @@ fun SectorDropDown(
                 .background(color = MaterialTheme.colorScheme.primary)
                 .align(Alignment.Center),
         ) {
-            sectores.forEach { sector ->
-                DropdownMenuItem(onClick = {
-                    onSectorSelected(sector.titulo)
+            // Agregar la opción "Todos los sectores"
+            DropdownMenuItem(
+                onClick = {
+                    onSectorSelected(null) // "Todos los sectores"
                     expanded = false
                 },
+                text = {
+                    Text(
+                        text = "Todos los sectores",
+                        color = MaterialTheme.colorScheme.onTertiary,
+                        style = MaterialTheme.typography.bodySmall,
+                    )
+                }
+            )
+
+            // Agregar los sectores restantes
+            sectores.forEach { sector ->
+                DropdownMenuItem(
+                    onClick = {
+                        onSectorSelected(sector.titulo)
+                        expanded = false
+                    },
                     text = {
                         Text(
                             text = sector.titulo,
@@ -388,7 +417,11 @@ fun SectorDropDown(
 }
 
 @Composable
-fun ZoneDropDown(selectedZone: String?, onZoneSelected: (String?) -> Unit) {
+fun ZoneDropDown(
+    selectedZone: String?,
+    onZoneSelected: (String?) -> Unit,
+    viewModel: SearchViewModel,
+) {
     var expanded by rememberSaveable { mutableStateOf(false) }
     val zoneOptions = mapOf(
         "Todas las zonas" to null,
@@ -422,6 +455,9 @@ fun ZoneDropDown(selectedZone: String?, onZoneSelected: (String?) -> Unit) {
             zoneOptions.forEach { (displayText, value) ->
                 DropdownMenuItem(onClick = {
                     onZoneSelected(value)
+
+                    if (value == null) viewModel.updateSector(null)
+
                     expanded = false
                 },
                     text = {
@@ -493,10 +529,6 @@ fun IncidentBox(
     typeIncident: String,
 ) {
 
-    val rememberedDateIncident = remember { dateIncident }
-    val rememberedHourIncident = remember { hourIncident }
-    val rememberedTypeIncident = remember { typeIncident }
-
     Box(
         modifier = Modifier
             .fillMaxWidth()
@@ -511,31 +543,30 @@ fun IncidentBox(
                 .padding(12.dp)
         ) {
             Row(
-                Modifier
-                    .fillMaxWidth(),
+                Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
                     text = "Incidente N° $numberIncident",
-                    fontWeight = FontWeight.ExtraBold,
-                    style = MaterialTheme.typography.bodySmall,
+                    style = MaterialTheme.typography.displaySmall,
                     color = MaterialTheme.colorScheme.primary,
-
-                    )
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
 
                 Row {
                     Text(
-                        text = rememberedDateIncident,
-                        style = MaterialTheme.typography.bodySmall,
+                        text = dateIncident,
+                        style = MaterialTheme.typography.displaySmall,
                         color = MaterialTheme.colorScheme.primary,
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis
                     )
                     Spacer(modifier = Modifier.width(4.dp))
                     Text(
-                        text = rememberedHourIncident,
-                        style = MaterialTheme.typography.bodySmall,
+                        text = hourIncident,
+                        style = MaterialTheme.typography.displaySmall,
                         color = MaterialTheme.colorScheme.primary,
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis
@@ -546,12 +577,10 @@ fun IncidentBox(
             Spacer(modifier = Modifier.height(4.dp))
 
             Text(
-                text = rememberedTypeIncident,
-                fontWeight = FontWeight.ExtraBold,
-                style = MaterialTheme.typography.bodySmall,
+                text = typeIncident,
+                style = MaterialTheme.typography.displaySmall,
                 color = MaterialTheme.colorScheme.primary,
-                modifier = Modifier
-                    .fillMaxWidth()
+                modifier = Modifier.fillMaxWidth()
             )
         }
     }

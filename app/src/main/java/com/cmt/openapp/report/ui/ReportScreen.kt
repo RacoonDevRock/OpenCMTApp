@@ -1,6 +1,5 @@
 package com.cmt.openapp.report.ui
 
-import android.widget.Toast
 import androidx.activity.compose.BackHandler
 import androidx.appcompat.app.AppCompatDelegate
 import androidx.compose.foundation.background
@@ -19,6 +18,8 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.FilePresent
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
@@ -27,8 +28,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
@@ -38,7 +39,6 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.FocusDirection
 import androidx.compose.ui.focus.FocusManager
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.ImeAction
@@ -59,6 +59,7 @@ import com.cmt.openapp.core.ui.shared.dialog.InfoContent
 import com.cmt.openapp.core.ui.shared.dialog.MyConfirmationReport
 import com.cmt.openapp.core.ui.shared.dialog.TopDialogSheet
 import com.cmt.openapp.core.ui.shared.loading.LoadingScreen
+import com.cmt.openapp.report.data.network.response.FormData
 import com.cmt.openapp.report.ui.viewmodel.ReportViewModel
 import kotlinx.coroutines.launch
 
@@ -67,29 +68,25 @@ fun ReportScreen(
     modifier: Modifier,
     navigationController: NavHostController,
     viewModel: ReportViewModel = hiltViewModel(),
-    incidentId: Long,
+    incidentId: Int,
     onThemeChange: (Int) -> Unit,
     onTypographyChange: (Typography) -> Unit,
 ) {
     var isTopDialogVisible by rememberSaveable { mutableStateOf(false) }
     val isLoading by viewModel.isLoading.collectAsState(false)
     val submissionMessage by viewModel.submissionMessage.collectAsState()
-    val context = LocalContext.current
     val focusManager = LocalFocusManager.current
     var showExitDialog by rememberSaveable { mutableStateOf(false) }
     val scope = rememberCoroutineScope()
+    val snackbarHostState = remember { SnackbarHostState() }
 
     BackHandler(enabled = true) {
         showExitDialog = true
     }
 
     LaunchedEffect(submissionMessage) {
-        submissionMessage?.let { message ->
-            Toast.makeText(context, message, Toast.LENGTH_SHORT).show()
-            if (message == "Solicitud enviada") {
-                viewModel.resetNavigation()
-                navigationController.navigate(Routes.ResearchScreen.route)
-            }
+        submissionMessage?.let {
+            snackbarHostState.showSnackbar(it)
         }
     }
 
@@ -117,7 +114,8 @@ fun ReportScreen(
         HeaderSection(
             modifier = Modifier.constrainAs(header) { top.linkTo(parent.top) },
             isInfo = false,
-            onInfoClick = {}, { showExitDialog = true })
+            onInfoClick = {},
+            onBackClick = { showExitDialog = true })
 
         Column(
             modifier = Modifier
@@ -150,6 +148,8 @@ fun ReportScreen(
             }
         }
 
+        SnackbarHost(hostState = snackbarHostState)
+
         FAB(
             isDarkTheme = AppCompatDelegate.getDefaultNightMode() == AppCompatDelegate.MODE_NIGHT_YES,
             onThemeChange = onThemeChange,
@@ -165,18 +165,10 @@ fun BoxRequest(
     modifier: Modifier,
     navigate: () -> Unit,
     viewModel: ReportViewModel,
-    incidentId: Long,
+    incidentId: Int,
     focusManager: FocusManager,
 ) {
-    val name: String by viewModel.name.observeAsState("")
-    val idt: String by viewModel.idt.observeAsState("")
-    val address: String by viewModel.address.observeAsState("")
-    val city: String by viewModel.city.observeAsState("")
-    val email: String by viewModel.email.observeAsState("")
-    val phone: String by viewModel.phone.observeAsState("")
-    val motive: String by viewModel.motive.observeAsState("")
-
-    val onSubmit = { viewModel.solicitarAccesoIncidente(incidentId) { navigate() } }
+    val formData by viewModel.formData.collectAsState(FormData())
 
     Box(
         modifier = modifier
@@ -195,21 +187,28 @@ fun BoxRequest(
             )
             RequestForm(
                 focusManager = focusManager,
-                name = name,
-                onNameChange = { viewModel.updateName(it) },
-                idt = idt,
-                onIdtChange = { viewModel.updateIdt(it) },
-                address = address,
-                onAddressChange = { viewModel.updateAddress(it) },
-                city = city,
-                onCityChange = { viewModel.updateCity(it) },
-                email = email,
-                onEmailChange = { viewModel.updateEmail(it) },
-                phone = phone,
-                onPhoneChange = { viewModel.updatePhone(it) },
-                motive = motive,
-                onMotiveChange = { viewModel.updateMotive(it) },
-                onSubmit = onSubmit
+                formData = formData,
+                onFormDataChange = { updatedData ->
+                    viewModel.updateFormData {
+                        it.copy(
+                            updatedData.name,
+                            updatedData.idt,
+                            updatedData.address,
+                            updatedData.city,
+                            updatedData.email,
+                            updatedData.phone,
+                            updatedData.motive
+                        )
+                    }
+                },
+                onSubmit = { viewModel.solicitarAccesoIncidente(incidentId) { navigate() } },
+                isSubmitEnabled = formData.name.isNotBlank() &&
+                        formData.idt.isNotBlank() &&
+                        formData.address.isNotBlank() &&
+                        formData.city.isNotBlank() &&
+                        formData.email.isNotBlank() &&
+                        formData.phone.isNotBlank() &&
+                        formData.motive.isNotBlank()
             )
         }
     }
@@ -218,21 +217,10 @@ fun BoxRequest(
 @Composable
 fun RequestForm(
     focusManager: FocusManager,
-    name: String,
-    onNameChange: (String) -> Unit,
-    idt: String,
-    onIdtChange: (String) -> Unit,
-    address: String,
-    onAddressChange: (String) -> Unit,
-    city: String,
-    onCityChange: (String) -> Unit,
-    email: String,
-    onEmailChange: (String) -> Unit,
-    phone: String,
-    onPhoneChange: (String) -> Unit,
-    motive: String,
-    onMotiveChange: (String) -> Unit,
+    formData: FormData,
+    onFormDataChange: (FormData) -> Unit,
     onSubmit: () -> Unit,
+    isSubmitEnabled: Boolean,
 ) {
 
     Column(
@@ -243,53 +231,77 @@ fun RequestForm(
         verticalArrangement = Arrangement.spacedBy(10.dp)
     ) {
         MyCustomField(
-            stringResource(id = R.string.name_field_report),
-            name,
-            onNameChange,
+            placeholder = stringResource(id = R.string.name_field_report),
+            value = formData.name,
+            onValueChange = { onFormDataChange(formData.copy(name = it)) },
             onNext = {
                 focusManager.moveFocus(
                     FocusDirection.Next
                 )
             })
 
-        IdtField(stringResource(id = R.string.id_field_report), idt, onIdtChange,
+        IdtField(
+            placeholder = stringResource(id = R.string.id_field_report),
+            value = formData.idt,
+            onIdtChange = { onFormDataChange(formData.copy(idt = it)) },
             onNext = {
                 focusManager.moveFocus(
                     FocusDirection.Next
                 )
             })
 
-        MyCustomField(stringResource(id = R.string.address_field_report), address, onAddressChange,
+        MyCustomField(
+            placeholder = stringResource(id = R.string.address_field_report),
+            value = formData.address,
+            onValueChange = { onFormDataChange(formData.copy(address = it)) },
             onNext = {
                 focusManager.moveFocus(
                     FocusDirection.Next
                 )
             })
 
-        MyCustomField(stringResource(id = R.string.city_field_report), city, onCityChange,
+        MyCustomField(
+            placeholder = stringResource(id = R.string.city_field_report),
+            value = formData.city,
+            onValueChange = { onFormDataChange(formData.copy(city = it)) },
             onNext = {
                 focusManager.moveFocus(
                     FocusDirection.Next
                 )
             })
 
-        EmailField(stringResource(id = R.string.email_field_report), email, onEmailChange,
+        EmailField(
+            placeholder = stringResource(id = R.string.email_field_report),
+            value = formData.email,
+            onEmailChange = { onFormDataChange(formData.copy(email = it)) },
             onNext = {
                 focusManager.moveFocus(
                     FocusDirection.Next
                 )
             })
 
-        PhoneField(stringResource(id = R.string.phone_field_report), phone, onPhoneChange,
+        PhoneField(
+            placeholder = stringResource(id = R.string.phone_field_report),
+            value = formData.phone,
+            onPhoneChange = { onFormDataChange(formData.copy(phone = it)) },
             onNext = {
                 focusManager.moveFocus(
                     FocusDirection.Next
                 )
             })
 
-        MotiveField(stringResource(id = R.string.motive_field_report), motive, onMotiveChange) {}
+        MotiveField(
+            placeholder = stringResource(id = R.string.motive_field_report),
+            value = formData.motive,
+            onValueChange = { onFormDataChange(formData.copy(motive = it)) },
+        ) { focusManager.clearFocus() }
 
-        MyButton(onSubmit, stringResource(id = R.string.report_button), Icons.Default.FilePresent)
+        MyButton(
+            onSubmit,
+            stringResource(id = R.string.report_button),
+            Icons.Default.FilePresent,
+            onEnable = isSubmitEnabled
+        )
     }
 }
 
@@ -301,7 +313,6 @@ fun MotiveField(
     onDone: () -> Unit,
 ) {
     val focusManager = LocalFocusManager.current
-
 
     TextField(
         value = value,
@@ -337,7 +348,7 @@ fun MotiveField(
                 onDone()
             }
         ),
-        shape = RoundedCornerShape(25.dp)
+        shape = RoundedCornerShape(25.dp),
     )
 }
 
@@ -345,14 +356,14 @@ fun MotiveField(
 fun PhoneField(
     placeholder: String,
     value: String,
-    onValueChange: (String) -> Unit,
+    onPhoneChange: (String) -> Unit,
     onNext: () -> Unit,
 ) {
     val focusManager = LocalFocusManager.current
 
     TextField(
         value = value,
-        onValueChange = onValueChange,
+        onValueChange = onPhoneChange,
         modifier = Modifier.fillMaxWidth(),
         placeholder = {
             Text(
@@ -385,7 +396,7 @@ fun PhoneField(
                 onNext()
             }
         ),
-        shape = RoundedCornerShape(25.dp)
+        shape = RoundedCornerShape(25.dp),
     )
 }
 
@@ -479,7 +490,7 @@ fun MyCustomField(
         keyboardActions = KeyboardActions(
             onNext = { onNext() }
         ),
-        shape = RoundedCornerShape(25.dp)
+        shape = RoundedCornerShape(25.dp),
     )
 }
 
@@ -527,12 +538,12 @@ fun IdtField(
                 onNext()
             }
         ),
-        shape = RoundedCornerShape(25.dp)
+        shape = RoundedCornerShape(25.dp),
     )
 }
 
 @Composable
-fun RequestHeader(modifier: Modifier, incidentId: Long) {
+fun RequestHeader(modifier: Modifier, incidentId: Int) {
     Text(
         text = stringResource(id = R.string.title_report),
         color = MaterialTheme.colorScheme.primary,

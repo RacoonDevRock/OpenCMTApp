@@ -66,7 +66,7 @@ fun DetailIncidentScreen(
 
     LaunchedEffect(Unit) {
         withContext(Dispatchers.IO) {
-            viewModel.loadIncidentDetail(incidentId.toLong())
+            viewModel.loadIncidentDetail(incidentId.toInt())
         }
     }
 
@@ -123,7 +123,7 @@ fun DetailIncidentScreen(
         RequestedBox(
             incidentId,
             { id ->
-                navigationController.navigate(Routes.ReportScreen.createRoute(id.toLong()))
+                navigationController.navigate(Routes.ReportScreen.createRoute(id.toInt()))
             },
             Modifier
                 .padding(top = 20.dp)
